@@ -2,6 +2,8 @@
  * Application Configuration and State
  * Stores application mode, settings, and parameters
  * Accessible by all routes and branches
+ * 
+ * Modes: 'dev' (development) or 'live' (production)
  */
 
 class AppConfig {
@@ -9,9 +11,8 @@ class AppConfig {
     this.initialized = false;
     this.mode = null;
     this.modeConstants = {
-      DEBUG: 'debug',
-      TEST: 'test',
-      PROD: 'production'
+      DEV: 'dev',
+      LIVE: 'live'
     };
     this.outputTypes = {
       JSON: 'json',
@@ -23,21 +24,19 @@ class AppConfig {
 
   /**
    * Initialize application configuration
-   * @param {string} nodeEnv - NODE_ENV value
+   * @param {string} nodeEnv - NODE_ENV value (development, production, etc.)
    * @param {string} port - Server port
    * @param {string} outputType - Default output type
    */
   initialize(nodeEnv, port, outputType = 'json') {
-    const env = nodeEnv || 'development';
+    const env = nodeEnv || 'dev';
     const normalizedEnv = env.toLowerCase();
 
-    // Determine mode
-    if (normalizedEnv === 'debug') {
-      this.mode = this.modeConstants.DEBUG;
-    } else if (normalizedEnv === 'test') {
-      this.mode = this.modeConstants.TEST;
+    // Determine mode: only 'dev' or 'live'
+    if (normalizedEnv === 'prod' || normalizedEnv === 'live') {
+      this.mode = this.modeConstants.LIVE;
     } else {
-      this.mode = this.modeConstants.PROD;
+      this.mode = this.modeConstants.DEV;
     }
 
     this.config = {
@@ -46,9 +45,8 @@ class AppConfig {
       outputType: outputType.toLowerCase(),
       nodeEnv: env,
       timestamp: new Date().toISOString(),
-      isDebug: this.mode === this.modeConstants.DEBUG,
-      isTest: this.mode === this.modeConstants.TEST,
-      isProd: this.mode === this.modeConstants.PROD,
+      isDev: this.mode === this.modeConstants.DEV,
+      isLive: this.mode === this.modeConstants.LIVE,
       version: '1.0.0',
       name: 'EarnMitra Server',
       author: 'SK Sharma'

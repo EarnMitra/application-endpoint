@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EarnMitra API Tester</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 25px;
+            min-height: 800px;
+        }
+
+        .section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #333;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input[type="text"],
+        input[type="url"],
+        input[type="number"],
+        select,
+        textarea {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus,
+        input[type="url"]:focus,
+        input[type="number"]:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 150px;
+            max-height: 300px;
+            font-size: 13px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            flex: 2;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-small {
+            padding: 8px 12px;
+            font-size: 12px;
+            flex: 1;
+        }
+
+        .method-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-top: 5px;
+        }
+
+        .method-get { background: #61affe; color: white; }
+        .method-post { background: #49cc90; color: white; }
+        .method-put { background: #fca130; color: white; }
+        .method-delete { background: #f93e3e; color: white; }
+        .method-patch { background: #50e3c2; color: white; }
+
+        .response-section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .response-box {
+            background: #f5f5f5;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 15px;
+            max-height: 350px;
+            overflow-y: auto;
+        }
+
+        .response-box pre {
+            margin: 0;
+            font-size: 12px;
+            color: #333;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .response-headers {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .response-body {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .response-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #667eea;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .checkbox-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            cursor: pointer;
+            width: 18px;
+            height: 18px;
+        }
+
+        .checkbox-item label {
+            margin: 0;
+            cursor: pointer;
+            text-transform: none;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .status-success { background: #d4edda; color: #155724; }
+        .status-error { background: #f8d7da; color: #721c24; }
+        .status-pending { background: #fff3cd; color: #856404; }
+
+        .endpoint-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+        }
+
+        .endpoint-item {
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .endpoint-item:hover {
+            background: #f5f5f5;
+        }
+
+        .endpoint-item.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .endpoint-method {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+            width: auto;
+        }
+
+        .close-btn:hover {
+            color: #333;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        @media (max-width: 1024px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 EarnMitra API Tester</h1>
+            <p>Test all API endpoints with real-time responses</p>
+        </div>
+
+        <div class="content">
+            <!-- LEFT PANEL: REQUEST -->
+            <div class="section">
+                <div class="section-title">📤 Request</div>
+
+                <!-- Endpoint Selection -->
+                <div class="input-group">
+                    <label>Quick Select Endpoint</label>
+                    <select id="endpointSelect" onchange="loadEndpoint()">
+                        <option value="">-- Select an endpoint --</option>
+                        <optgroup label="Authentication">
+                            <option value="phone-initiate">Phone OTP - Initiate (/api/auth/phone/initiate)</option>
+                            <option value="phone-verify">Phone OTP - Verify (/api/auth/phone/verify)</option>
+                            <option value="register-add-email">Register - Add Email (/api/auth/register/add-email)</option>
+                            <option value="register-verify-email">Register - Verify Email (/api/auth/register/verify-email)</option>
+                            <option value="register-complete">Register - Complete Profile (/api/auth/register/complete-profile)</option>
+                            <option value="auth-status">Auth - Status Check (/api/auth/status)</option>
+                        </optgroup>
+                        <optgroup label="Health">
+                            <option value="health-check">Health Check (/api/health)</option>
+                            <option value="config">Config (/api/config)</option>
+                            <option value="db-health">Database Health (/api/db-health)</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <!-- URL Input -->
+                <div class="input-group">
+                    <label>Endpoint URL</label>
+                    <input type="text" id="endpointUrl" placeholder="http://localhost:5000/api/auth/phone/initiate" value="http://localhost:5000">
+                </div>
+
+                <!-- Action Buttons (Top) -->
+                <div class="button-group">
+                    <button class="btn-primary" onclick="sendRequest()">Send Request</button>
+                    <button class="btn-secondary btn-small" onclick="clearAll()">Clear</button>
+                </div>
+
+                <!-- Method Select -->
+                <div class="input-group">
+                    <label>HTTP Method</label>
+                    <select id="method" onchange="updateMethodBadge()">
+                        <option value="GET">GET</option>
+                        <option value="POST" selected>POST</option>
+                        <option value="PUT">PUT</option>
+                        <option value="DELETE">DELETE</option>
+                        <option value="PATCH">PATCH</option>
+                    </select>
+                    <span id="methodBadge" class="method-badge method-post">POST</span>
+                </div>
+
+                <!-- Headers Input -->
+                <div class="input-group">
+                    <label>Headers (JSON)</label>
+                    <textarea id="headers" placeholder='{"Content-Type": "application/json", "Authorization": "Bearer token"}'>{"Content-Type": "application/json"}</textarea>
+                </div>
+
+                <!-- Request Body -->
+                <div class="input-group">
+                    <label>Request Body (JSON)</label>
+                    <textarea id="body" placeholder='{"phone": "9876543210"}'>{"phone": "9876543210"}</textarea>
+                </div>
+
+                <!-- Sample Data Templates -->
+                <div class="input-group">
+                    <label>Sample Data Templates</label>
+                    <select id="sampleData" onchange="loadSampleData()">
+                        <option value="">-- Select a template --</option>
+                        <option value="phone-otp-initiate">Phone OTP Initiate</option>
+                        <option value="phone-otp-verify">Phone OTP Verify</option>
+                        <option value="add-email">Add Email</option>
+                        <option value="verify-email">Verify Email</option>
+                        <option value="complete-profile">Complete Profile</option>
+                        <option value="status-check">Status Check</option>
+                    </select>
+                </div>
+
+                <!-- Visibility Options -->
+                <div class="input-group">
+                    <label>Display Options</label>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="showBody" checked>
+                            <label for="showBody">Body</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="showHeaders" checked>
+                            <label for="showHeaders">Headers</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="prettyPrint" checked>
+                            <label for="prettyPrint">Pretty Print</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Copy URL Button -->
+                <button class="btn-secondary" onclick="copyUrl()">Copy URL</button>
+
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Sending request...</p>
+                </div>
+            </div>
+
+            <!-- RIGHT PANEL: RESPONSE -->
+            <div class="section">
+                <div class="section-title">📥 Response</div>
+
+                <!-- Response Status -->
+                <div id="responseStatus" style="display:none;">
+                    <span class="status-badge" id="statusBadge"></span>
+                </div>
+
+                <!-- Response Time -->
+                <div class="input-group" style="display:none" id="responseTimeDiv">
+                    <label>Response Time</label>
+                    <input type="text" id="responseTime" readonly placeholder="0ms">
+                </div>
+
+                <!-- Headers Response -->
+                <div class="input-group" id="headersResponseDiv" style="display:none">
+                    <label>Response Headers</label>
+                    <div class="response-box response-headers">
+                        <pre id="headersResponse">No response yet</pre>
+                    </div>
+                </div>
+
+                <!-- Data Response -->
+                <div class="input-group" id="bodyResponseDiv" style="display:none">
+                    <label>Response Body</label>
+                    <div class="response-box response-body">
+                        <pre id="bodyResponse">No response yet</pre>
+                    </div>
+                </div>
+
+                <!-- Error Response -->
+                <div class="input-group" id="errorResponseDiv" style="display:none">
+                    <label>Error Details</label>
+                    <div class="response-box response-error">
+                        <pre id="errorResponse">No errors</pre>
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample data templates
+        const sampleDataTemplates = {
+            'phone-otp-initiate': {
+                url: 'http://localhost:5000/api/auth/phone/initiate',
+                method: 'POST',
+                headers: '{"Content-Type": "application/json"}',
+                body: '{"phone": "9876543210"}'
+            },
+            'phone-otp-verify': {
+                url: 'http://localhost:5000/api/auth/phone/verify',
+                method: 'POST',
+                headers: '{"Content-Type": "application/json"}',
+                body: '{"token": "TOKEN_HERE", "otp": "123456", "phone": "9876543210"}'
+            },
+            'add-email': {
+                url: 'http://localhost:5000/api/auth/register/add-email',
+                method: 'POST',
+                headers: '{"Content-Type": "application/json"}',
+                body: '{"phone": "9876543210", "email": "user@example.com"}'
+            },
+            'verify-email': {
+                url: 'http://localhost:5000/api/auth/register/verify-email',
+                method: 'POST',
+                headers: '{"Content-Type": "application/json"}',
+                body: '{"token": "TOKEN_HERE", "otp": "123456", "email": "user@example.com"}'
+            },
+            'complete-profile': {
+                url: 'http://localhost:5000/api/auth/register/complete-profile',
+                method: 'POST',
+                headers: '{"Content-Type": "application/json"}',
+                body: '{"phone": "9876543210", "first_name": "John", "last_name": "Doe", "gender": "male", "date_of_birth": "1990-01-15"}'
+            },
+            'status-check': {
+                url: 'http://localhost:5000/api/auth/status?phone=9876543210',
+                method: 'GET',
+                headers: '{"Content-Type": "application/json"}',
+                body: ''
+            }
+        };
+
+        // Endpoint presets
+        const endpoints = {
+            'phone-initiate': {
+                url: '/api/auth/phone/initiate',
+                method: 'POST',
+                template: 'phone-otp-initiate'
+            },
+            'phone-verify': {
+                url: '/api/auth/phone/verify',
+                method: 'POST',
+                template: 'phone-otp-verify'
+            },
+            'register-add-email': {
+                url: '/api/auth/register/add-email',
+                method: 'POST',
+                template: 'add-email'
+            },
+            'register-verify-email': {
+                url: '/api/auth/register/verify-email',
+                method: 'POST',
+                template: 'verify-email'
+            },
+            'register-complete': {
+                url: '/api/auth/register/complete-profile',
+                method: 'POST',
+                template: 'complete-profile'
+            },
+            'auth-status': {
+                url: '/api/auth/status?phone=9876543210',
+                method: 'GET',
+                template: 'status-check'
+            },
+            'health-check': {
+                url: '/api/health',
+                method: 'GET',
+                template: null
+            },
+            'config': {
+                url: '/api/config',
+                method: 'GET',
+                template: null
+            },
+            'db-health': {
+                url: '/api/db-health',
+                method: 'GET',
+                template: null
+            }
+        };
+
+        // Load endpoint
+        function loadEndpoint() {
+            const select = document.getElementById('endpointSelect');
+            const key = select.value;
+            
+            if (key && endpoints[key]) {
+                const endpoint = endpoints[key];
+                const baseUrl = document.getElementById('endpointUrl').value.replace(/\/$/, '');
+                
+                document.getElementById('endpointUrl').value = baseUrl + endpoint.url;
+                document.getElementById('method').value = endpoint.method;
+                updateMethodBadge();
+                
+                if (endpoint.template) {
+                    document.getElementById('sampleData').value = endpoint.template;
+                    loadSampleData();
+                }
+            }
+        }
+
+        // Load sample data
+        function loadSampleData() {
+            const select = document.getElementById('sampleData');
+            const key = select.value;
+            
+            if (key && sampleDataTemplates[key]) {
+                const template = sampleDataTemplates[key];
+                const baseUrl = document.getElementById('endpointUrl').value.replace(/\/$/, '');
+                
+                document.getElementById('endpointUrl').value = template.url;
+                document.getElementById('method').value = template.method;
+                document.getElementById('headers').value = template.headers;
+                document.getElementById('body').value = template.body;
+                updateMethodBadge();
+            }
+        }
+
+        // Update method badge
+        function updateMethodBadge() {
+            const method = document.getElementById('method').value;
+            const badge = document.getElementById('methodBadge');
+            badge.textContent = method;
+            badge.className = 'method-badge method-' + method.toLowerCase();
+        }
+
+        // Send request
+        async function sendRequest() {
+            const url = document.getElementById('endpointUrl').value.trim();
+            const method = document.getElementById('method').value;
+            const headersText = document.getElementById('headers').value.trim();
+            const body = document.getElementById('body').value.trim();
+            
+            if (!url) {
+                alert('Please enter an endpoint URL');
+                return;
+            }
+
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('responseStatus').style.display = 'none';
+            
+            try {
+                // Parse headers
+                let headers = {};
+                try {
+                    if (headersText) {
+                        headers = JSON.parse(headersText);
+                    }
+                } catch (e) {
+                    alert('Invalid headers JSON: ' + e.message);
+                    document.getElementById('loading').style.display = 'none';
+                    return;
+                }
+
+                // Parse body
+                let requestBody = null;
+                if (body && method !== 'GET') {
+                    try {
+                        requestBody = JSON.parse(body);
+                    } catch (e) {
+                        alert('Invalid request body JSON: ' + e.message);
+                        document.getElementById('loading').style.display = 'none';
+                        return;
+                    }
+                }
+
+                // Prepare fetch options
+                const options = {
+                    method: method,
+                    headers: headers
+                };
+
+                if (requestBody && method !== 'GET') {
+                    options.body = JSON.stringify(requestBody);
+                }
+
+                // Send request
+                const startTime = performance.now();
+                const response = await fetch(url, options);
+                const endTime = performance.now();
+                const responseTime = Math.round(endTime - startTime);
+
+                // Parse response
+                let responseData;
+                try {
+                    responseData = await response.json();
+                } catch (e) {
+                    responseData = await response.text();
+                }
+
+                // Display response
+                displayResponse(response, responseData, responseTime);
+
+            } catch (error) {
+                displayError(error);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        // Display response
+        function displayResponse(response, data, responseTime) {
+            const showHeaders = document.getElementById('showHeaders').checked;
+            const showBody = document.getElementById('showBody').checked;
+            const prettyPrint = document.getElementById('prettyPrint').checked;
+
+            // Show status
+            document.getElementById('responseStatus').style.display = 'block';
+            const statusBadge = document.getElementById('statusBadge');
+            statusBadge.textContent = `Status: ${response.status} ${response.statusText}`;
+            statusBadge.className = 'status-badge ' + (response.ok ? 'status-success' : 'status-error');
+
+            // Show time
+            document.getElementById('responseTimeDiv').style.display = 'block';
+            document.getElementById('responseTime').value = responseTime + 'ms';
+
+            // Show headers
+            if (showHeaders) {
+                document.getElementById('headersResponseDiv').style.display = 'block';
+                let headersText = '';
+                response.headers.forEach((value, name) => {
+                    headersText += `${name}: ${value}\n`;
+                });
+                document.getElementById('headersResponse').textContent = headersText || 'No headers';
+            } else {
+                document.getElementById('headersResponseDiv').style.display = 'none';
+            }
+
+            // Show body
+            if (showBody) {
+                document.getElementById('bodyResponseDiv').style.display = 'block';
+                let bodyText = data;
+                if (typeof data === 'object' && prettyPrint) {
+                    bodyText = JSON.stringify(data, null, 2);
+                }
+                document.getElementById('bodyResponse').textContent = bodyText;
+            } else {
+                document.getElementById('bodyResponseDiv').style.display = 'none';
+            }
+
+            document.getElementById('errorResponseDiv').style.display = 'none';
+        }
+
+        // Display error
+        function displayError(error) {
+            document.getElementById('responseStatus').style.display = 'block';
+            const statusBadge = document.getElementById('statusBadge');
+            statusBadge.textContent = 'Error';
+            statusBadge.className = 'status-badge status-error';
+
+            document.getElementById('headersResponseDiv').style.display = 'none';
+            document.getElementById('bodyResponseDiv').style.display = 'none';
+            
+            document.getElementById('errorResponseDiv').style.display = 'block';
+            document.getElementById('errorResponse').textContent = error.message || 'Unknown error occurred';
+        }
+
+        // Clear all
+        function clearAll() {
+            document.getElementById('endpointUrl').value = 'http://localhost:5000';
+            document.getElementById('method').value = 'POST';
+            document.getElementById('headers').value = '{"Content-Type": "application/json"}';
+            document.getElementById('body').value = '{"phone": "9876543210"}';
+            document.getElementById('endpointSelect').value = '';
+            document.getElementById('sampleData').value = '';
+            updateMethodBadge();
+            
+            document.getElementById('responseStatus').style.display = 'none';
+            document.getElementById('headersResponseDiv').style.display = 'none';
+            document.getElementById('bodyResponseDiv').style.display = 'none';
+            document.getElementById('errorResponseDiv').style.display = 'none';
+            document.getElementById('responseTimeDiv').style.display = 'none';
+        }
+
+        // Copy URL
+        function copyUrl() {
+            const url = document.getElementById('endpointUrl').value;
+            navigator.clipboard.writeText(url).then(() => {
+                alert('URL copied to clipboard!');
+            });
+        }
+
+        // Initialize
+        updateMethodBadge();
+    </script>
+</body>
+</html>

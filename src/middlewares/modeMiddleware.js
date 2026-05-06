@@ -1,16 +1,15 @@
 /**
  * Mode Middleware
- * Detects the application mode (DEBUG, TEST, PROD) from environment
+ * Detects the application mode (dev or live) from environment
  * and attaches it to the request object for use in routes and other middlewares
  */
 
 const appConfig = require('../config/appConfig');
 
-// Mode constants
+// Mode constants - matches appConfig.js
 const MODES = {
-  DEBUG: 'debug',
-  TEST: 'test',
-  PROD: 'production'
+  DEV: 'dev',
+  LIVE: 'live'
 };
 
 // Output types
@@ -30,9 +29,8 @@ const modeMiddleware = (req, res, next) => {
   req.appConfig = config;
   
   // Add mode details with constants
-  req.isDebugMode = mode === MODES.DEBUG;
-  req.isTestMode = mode === MODES.TEST;
-  req.isProductionMode = mode === MODES.PROD;
+  req.isDevMode = mode === MODES.DEV;
+  req.isLiveMode = mode === MODES.LIVE;
   
   // Add output type
   req.outputType = config.outputType || OUTPUT_TYPES.JSON;
@@ -41,8 +39,8 @@ const modeMiddleware = (req, res, next) => {
   req.MODES = MODES;
   req.OUTPUT_TYPES = OUTPUT_TYPES;
   
-  // Add mode to response headers for debugging
-  if (mode !== MODES.PROD) {
+  // Add mode to response headers (only in dev mode)
+  if (mode === MODES.DEV) {
     res.set('X-App-Mode', mode.toUpperCase());
     res.set('X-Output-Type', req.outputType.toUpperCase());
   }

@@ -106,7 +106,7 @@ const responseMiddleware = (req, res, next) => {
     return res.status(statusCode).json(response);
   };
 
-  res.error = (message = 'Error', statusCode = 400, errors = null, errorCode = null) => {
+  res.error = (errors = null, message = 'Error', statusCode = 400, errorCode = null) => {
     const response = {
       status: 'error',
       statusCode,
