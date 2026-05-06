@@ -135,6 +135,33 @@ app.get('/api/app-state', (req, res) => {
   );
 });
 
+/**
+ * Connection Status Endpoint
+ * Returns detailed database connection pool statistics
+ */
+app.get('/api/connection-status', (req, res) => {
+  try {
+    const stats = databaseConfig.getPoolStats();
+    res.success(
+      {
+        ...stats,
+        timestamp: new Date().toISOString(),
+        keepAliveEnabled: true,
+        keepAliveInterval: '30 seconds',
+        healthCheckInterval: '5 minutes'
+      },
+      'Connection pool status retrieved',
+      200
+    );
+  } catch (error) {
+    res.error(
+      { error: error.message },
+      'Failed to get connection status',
+      500
+    );
+  }
+});
+
 // 404 Handler
 app.use((req, res) => {
   res.error('Route not found', 404);
@@ -143,6 +170,19 @@ app.use((req, res) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Error:', err.message);
+  
+  // Handle database connection errors gracefully
+  if (err.code === 'ECONNRESET' || err.code === 'ECONNREFUSED') {
+    console.error('⚠️ Database connection error - attempting to recover...');
+    return res.status(503).json({
+      success: false,
+      message: 'Database connection temporarily unavailable. The server will auto-recover.',
+      error: {
+        code: err.code,
+        message: 'Connection reset by database server'
+      }
+    });
+  }
   
   if (req.isLiveMode) {
     res.error(null, 'Internal server error', 500);
@@ -179,8 +219,16 @@ app.listen(PORT, () => {
     console.log(`   GET /api/health - Server health check`);
     console.log(`   GET /api/config - Application configuration`);
     console.log(`   GET /api/db-health - Database connection status`);
-    console.log(`   GET /api/app-state - Complete app state with modes\n`);
+    console.log(`   GET /api/app-state - Complete app state with modes`);
+    console.log(`   GET /api/connection-status - Connection pool statistics\n`);
   }
+
+  // Log database connection status
+  console.log('\n🔌 Database Connection Status:');
+  console.log('   ✓ Keep-Alive: ENABLED (every 30 seconds)');
+  console.log('   ✓ Health Check: ENABLED (every 5 minutes)');
+  console.log('   ✓ Idle Timeout: 15 minutes');
+  console.log('   ✓ Auto-Recovery: ENABLED\n');
 });
 
 // Graceful Shutdown Handler

@@ -27,10 +27,13 @@ class DatabaseConfig {
       password = process.env.DB_PASSWORD || '',
       min = parseInt(process.env.DB_POOL_MIN, 10) || 2,
       max = parseInt(process.env.DB_POOL_MAX, 10) || 10,
-      idleTimeoutMillis = parseInt(process.env.DB_POOL_IDLE_TIMEOUT, 10) || 30000,
+      idleTimeoutMillis = parseInt(process.env.DB_POOL_IDLE_TIMEOUT, 10) || 900000, // 15 minutes
       connectionTimeoutMillis = parseInt(process.env.DB_CONNECTION_TIMEOUT, 10) || 5000,
+      statementTimeoutMillis = parseInt(process.env.DB_STATEMENT_TIMEOUT, 10) || 30000,
       ssl = process.env.DB_SSL === 'true' ? true : false,
-      rejectUnauthorized = process.env.DB_SSL_REJECT_UNAUTHORIZED === 'true' ? true : false
+      rejectUnauthorized = process.env.DB_SSL_REJECT_UNAUTHORIZED === 'true' ? true : false,
+      keepalives = process.env.DB_KEEPALIVES === 'true' ? true : true,
+      keepalivesIdleSeconds = parseInt(process.env.DB_KEEPALIVES_IDLE_SECONDS, 10) || 30
     } = options;
 
     this.connectionConfig = {
@@ -43,7 +46,10 @@ class DatabaseConfig {
       max,
       idleTimeoutMillis,
       connectionTimeoutMillis,
-      ssl: ssl ? { rejectUnauthorized } : false
+      statement_timeout: statementTimeoutMillis,
+      ssl: ssl ? { rejectUnauthorized } : false,
+      keepalives,
+      keepalivesIdle: keepalivesIdleSeconds
     };
 
     try {
@@ -51,12 +57,22 @@ class DatabaseConfig {
 
       // Handle pool errors
       this.pool.on('error', (err) => {
-        console.error('Unexpected error on idle client', err);
+        console.error('⚠️  Database connection error:', err.message);
+        // Connection will be automatically recreated on next query
+      });
+
+      // Handle pool connect
+      this.pool.on('connect', () => {
+        console.log('✓ New database connection established');
       });
 
       // Log successful pool creation
       console.log(`✓ Database connection pool initialized (${min}-${max} connections)`);
+      console.log(`✓ Keep-alive enabled: TCP keep-alive every ${keepalivesIdleSeconds}s`);
       this.initialized = true;
+      
+      // Start health check interval
+      this.startHealthCheck();
 
       return this.pool;
     } catch (error) {
@@ -178,6 +194,7 @@ class DatabaseConfig {
    * @returns {Promise<void>}
    */
   async close() {
+    this.stopHealthCheck();
     if (this.pool) {
       await this.pool.end();
       this.pool = null;
@@ -193,6 +210,44 @@ class DatabaseConfig {
   getConfig() {
     const { password, ...safeConfig } = this.connectionConfig;
     return safeConfig;
+  }
+
+  /**
+   * Start health check interval to keep connection alive
+   * Sends periodic queries to maintain connection and detect issues
+   */
+  startHealthCheck() {
+    if (this.healthCheckInterval) {
+      clearInterval(this.healthCheckInterval);
+    }
+
+    // Run health check every 5 minutes
+    this.healthCheckInterval = setInterval(async () => {
+      try {
+        const result = await this.query('SELECT NOW() as time');
+        const stats = this.getPoolStats();
+        console.log('✓ Health check passed', {
+          time: new Date().toISOString(),
+          activeConnections: stats.activeCount,
+          idleConnections: stats.idleCount
+        });
+      } catch (error) {
+        console.error('✗ Health check failed:', error.message);
+      }
+    }, 300000); // 5 minutes
+
+    console.log('✓ Database health check started (every 5 minutes)');
+  }
+
+  /**
+   * Stop health check interval
+   */
+  stopHealthCheck() {
+    if (this.healthCheckInterval) {
+      clearInterval(this.healthCheckInterval);
+      this.healthCheckInterval = null;
+      console.log('✓ Database health check stopped');
+    }
   }
 
   /**

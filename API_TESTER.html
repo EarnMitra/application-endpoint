@@ -4,804 +4,880 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EarnMitra API Tester</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 25px;
-            text-align: center;
-        }
-
-        .header h1 {
-            font-size: 28px;
-            margin-bottom: 5px;
-        }
-
-        .header p {
-            font-size: 14px;
-            opacity: 0.9;
-        }
-
-        .content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            padding: 25px;
-            min-height: 800px;
-        }
-
-        .section {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .section-title {
-            font-size: 16px;
-            font-weight: 700;
-            color: #333;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            border-bottom: 2px solid #667eea;
-            padding-bottom: 10px;
-        }
-
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        label {
-            font-size: 13px;
-            font-weight: 600;
-            color: #555;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        input[type="text"],
-        input[type="url"],
-        input[type="number"],
-        select,
-        textarea {
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 6px;
-            font-size: 14px;
-            font-family: 'Courier New', monospace;
-            transition: all 0.3s ease;
-        }
-
-        input[type="text"]:focus,
-        input[type="url"]:focus,
-        input[type="number"]:focus,
-        select:focus,
-        textarea:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        textarea {
-            resize: vertical;
-            min-height: 150px;
-            max-height: 300px;
-            font-size: 13px;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        button {
-            flex: 1;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            flex: 2;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-secondary {
-            background: #f0f0f0;
-            color: #333;
-        }
-
-        .btn-secondary:hover {
-            background: #e0e0e0;
-        }
-
-        .btn-small {
-            padding: 8px 12px;
-            font-size: 12px;
-            flex: 1;
-        }
-
-        .method-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            margin-top: 5px;
-        }
-
-        .method-get { background: #61affe; color: white; }
-        .method-post { background: #49cc90; color: white; }
-        .method-put { background: #fca130; color: white; }
-        .method-delete { background: #f93e3e; color: white; }
-        .method-patch { background: #50e3c2; color: white; }
-
-        .response-section {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .response-box {
-            background: #f5f5f5;
-            border: 2px solid #e0e0e0;
-            border-radius: 6px;
-            padding: 15px;
-            max-height: 350px;
-            overflow-y: auto;
-        }
-
-        .response-box pre {
-            margin: 0;
-            font-size: 12px;
-            color: #333;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
-
-        .response-headers {
-            background: #fff3cd;
-            color: #856404;
-        }
-
-        .response-body {
-            background: #d1ecf1;
-            color: #0c5460;
-        }
-
-        .response-error {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
-            color: #667eea;
-            padding: 20px;
-        }
-
-        .spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .checkbox-group {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        .checkbox-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-        }
-
-        .checkbox-item input[type="checkbox"] {
-            cursor: pointer;
-            width: 18px;
-            height: 18px;
-        }
-
-        .checkbox-item label {
-            margin: 0;
-            cursor: pointer;
-            text-transform: none;
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            margin-top: 10px;
-        }
-
-        .status-success { background: #d4edda; color: #155724; }
-        .status-error { background: #f8d7da; color: #721c24; }
-        .status-pending { background: #fff3cd; color: #856404; }
-
-        .endpoint-list {
-            max-height: 200px;
-            overflow-y: auto;
-            border: 2px solid #e0e0e0;
-            border-radius: 6px;
-        }
-
-        .endpoint-item {
-            padding: 10px;
-            border-bottom: 1px solid #e0e0e0;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .endpoint-item:hover {
-            background: #f5f5f5;
-        }
-
-        .endpoint-item.active {
-            background: #667eea;
-            color: white;
-        }
-
-        .endpoint-method {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 10px;
-            font-weight: 600;
-            margin-right: 10px;
-        }
-
-        .close-btn {
-            background: none;
-            border: none;
-            font-size: 18px;
-            cursor: pointer;
-            color: #666;
-            padding: 0;
-            width: auto;
-        }
-
-        .close-btn:hover {
-            color: #333;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: white;
-            border-radius: 10px;
-            padding: 25px;
-            max-width: 600px;
-            max-height: 80vh;
-            overflow-y: auto;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-        }
-
-        @media (max-width: 1024px) {
-            .content {
-                grid-template-columns: 1fr;
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        mono: ['JetBrains Mono', 'monospace'],
+                        sans: ['Space Grotesk', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f4ff',
+                            100: '#e0e9ff',
+                            400: '#818cf8',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#1e1b4b',
+                        },
+                        surface: {
+                            50: '#fafafa',
+                            100: '#f4f4f5',
+                            200: '#e4e4e7',
+                            800: '#18181b',
+                            900: '#09090b',
+                            950: '#050505',
+                        }
+                    },
+                    animation: {
+                        'spin-slow': 'spin 1.5s linear infinite',
+                        'fade-in': 'fadeIn 0.3s ease',
+                        'slide-up': 'slideUp 0.3s ease',
+                    },
+                    keyframes: {
+                        fadeIn: { '0%': { opacity: 0 }, '100%': { opacity: 1 } },
+                        slideUp: { '0%': { opacity: 0, transform: 'translateY(8px)' }, '100%': { opacity: 1, transform: 'translateY(0)' } },
+                    }
+                }
             }
         }
+    </script>
+    <style>
+        body { background: #09090b; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: #18181b; }
+        ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 99px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6366f1; }
+
+        /* Textarea & Input */
+        .code-input {
+            background: #0d0d0f;
+            border: 1px solid #27272a;
+            color: #e4e4e7;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12.5px;
+            line-height: 1.6;
+            border-radius: 8px;
+            padding: 12px 14px;
+            width: 100%;
+            resize: vertical;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+        .code-input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.12); }
+        .code-input::placeholder { color: #52525b; }
+
+        select.code-input option { background: #18181b; color: #e4e4e7; }
+
+        /* JSON syntax highlight classes */
+        .json-key { color: #818cf8; }
+        .json-string { color: #34d399; }
+        .json-number { color: #fb923c; }
+        .json-bool { color: #f472b6; }
+        .json-null { color: #94a3b8; }
+
+        /* Method badges */
+        .badge-get    { background: #1d4ed8; color: #bfdbfe; }
+        .badge-post   { background: #166534; color: #bbf7d0; }
+        .badge-put    { background: #92400e; color: #fde68a; }
+        .badge-delete { background: #991b1b; color: #fecaca; }
+        .badge-patch  { background: #164e63; color: #a5f3fc; }
+
+        /* Glow effect for active state */
+        .glow-indigo { box-shadow: 0 0 20px rgba(99,102,241,0.25); }
+
+        /* Tab active */
+        .tab-active { background: #6366f1; color: #fff; }
+        .tab-inactive { background: #18181b; color: #71717a; }
+        .tab-inactive:hover { background: #27272a; color: #a1a1aa; }
+
+        /* Cookie/Token pill */
+        .token-pill {
+            background: linear-gradient(135deg, #1e1b4b, #312e81);
+            border: 1px solid #4338ca;
+            border-radius: 99px;
+            padding: 3px 10px;
+            font-size: 11px;
+            font-family: 'JetBrains Mono', monospace;
+            color: #a5b4fc;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            max-width: 220px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Pulse dot */
+        .pulse-dot { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+        /* Grid lines background */
+        .grid-bg {
+            background-image: linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px);
+            background-size: 32px 32px;
+        }
+
+        /* Slide panel animation */
+        .response-panel { transition: all 0.3s ease; }
+
+        /* Custom checkbox */
+        input[type="checkbox"] { accent-color: #6366f1; }
     </style>
 </head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🚀 EarnMitra API Tester</h1>
-            <p>Test all API endpoints with real-time responses</p>
+<body class="font-sans text-zinc-200 min-h-screen grid-bg">
+
+    <!-- Header -->
+    <header class="border-b border-zinc-800 bg-surface-950/80 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-screen-2xl mx-auto px-6 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center text-sm font-bold shadow-lg shadow-brand-500/30">E</div>
+                <div>
+                    <h1 class="text-sm font-semibold tracking-tight text-zinc-100">EarnMitra API Tester</h1>
+                    <p class="text-xs text-zinc-500">Auth Flows & Endpoint Testing</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <!-- Session Token Status -->
+                <div id="tokenStatus" class="hidden items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 pulse-dot"></span>
+                    <span class="token-pill" id="tokenPill">No token</span>
+                    <button onclick="clearStoredToken()" class="text-xs text-zinc-500 hover:text-red-400 transition-colors">✕</button>
+                </div>
+                <div id="noTokenStatus" class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-zinc-600"></span>
+                    <span class="text-xs text-zinc-500 font-mono">no session</span>
+                </div>
+                <!-- Base URL -->
+                <div class="flex items-center gap-2 bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-1.5">
+                    <span class="text-xs text-zinc-500">base</span>
+                    <input type="text" id="baseUrl" value="http://localhost:5000" class="bg-transparent text-xs font-mono text-zinc-300 outline-none w-44 placeholder-zinc-600">
+                </div>
+            </div>
         </div>
+    </header>
 
-        <div class="content">
-            <!-- LEFT PANEL: REQUEST -->
-            <div class="section">
-                <div class="section-title">📤 Request</div>
+    <div class="max-w-screen-2xl mx-auto px-6 py-6">
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
 
-                <!-- Endpoint Selection -->
-                <div class="input-group">
-                    <label>Quick Select Endpoint</label>
-                    <select id="endpointSelect" onchange="loadEndpoint()">
-                        <option value="">-- Select an endpoint --</option>
-                        <optgroup label="Authentication">
-                            <option value="phone-initiate">Phone OTP - Initiate (/api/auth/phone/initiate)</option>
-                            <option value="phone-verify">Phone OTP - Verify (/api/auth/phone/verify)</option>
-                            <option value="register-add-email">Register - Add Email (/api/auth/register/add-email)</option>
-                            <option value="register-verify-email">Register - Verify Email (/api/auth/register/verify-email)</option>
-                            <option value="register-complete">Register - Complete Profile (/api/auth/register/complete-profile)</option>
-                            <option value="auth-status">Auth - Status Check (/api/auth/status)</option>
+            <!-- ══════════════════════════ LEFT: REQUEST ══════════════════════════ -->
+            <div class="space-y-4">
+
+                <!-- Endpoint Selector Card -->
+                <div class="bg-zinc-900/60 border border-zinc-800 rounded-xl p-4 space-y-3">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-xs font-semibold text-zinc-400 uppercase tracking-widest">Endpoint</span>
+                    </div>
+
+                    <select id="endpointSelect" onchange="loadEndpoint()" class="code-input">
+                        <option value="">— Quick select endpoint —</option>
+                        <optgroup label="Authentication · Phone OTP">
+                            <option value="phone-initiate">📱 Phone OTP Initiate · POST /api/auth/phone/initiate</option>
+                            <option value="phone-verify">✓ Phone OTP Verify · POST /api/auth/phone/verify</option>
                         </optgroup>
-                        <optgroup label="Health">
-                            <option value="health-check">Health Check (/api/health)</option>
-                            <option value="config">Config (/api/config)</option>
-                            <option value="db-health">Database Health (/api/db-health)</option>
+                        <optgroup label="Authentication · Registration">
+                            <option value="register-add-email">📧 Add Email · POST /api/auth/register/add-email</option>
+                            <option value="register-verify-email">✓ Verify Email · POST /api/auth/register/verify-email</option>
+                            <option value="register-complete">👤 Complete Profile · POST /api/auth/register/complete-profile</option>
+                        </optgroup>
+                        <optgroup label="Authentication · Status">
+                            <option value="auth-status">📊 Status Check · GET /api/auth/status</option>
+                        </optgroup>
+                        <optgroup label="Health & Config">
+                            <option value="health-check">💚 Health Check · GET /api/health</option>
+                            <option value="config">⚙️ Config · GET /api/config</option>
+                            <option value="db-health">🗄️ Database Health · GET /api/db-health</option>
                         </optgroup>
                     </select>
-                </div>
 
-                <!-- URL Input -->
-                <div class="input-group">
-                    <label>Endpoint URL</label>
-                    <input type="text" id="endpointUrl" placeholder="http://localhost:5000/api/auth/phone/initiate" value="http://localhost:5000">
-                </div>
-
-                <!-- Action Buttons (Top) -->
-                <div class="button-group">
-                    <button class="btn-primary" onclick="sendRequest()">Send Request</button>
-                    <button class="btn-secondary btn-small" onclick="clearAll()">Clear</button>
-                </div>
-
-                <!-- Method Select -->
-                <div class="input-group">
-                    <label>HTTP Method</label>
-                    <select id="method" onchange="updateMethodBadge()">
-                        <option value="GET">GET</option>
-                        <option value="POST" selected>POST</option>
-                        <option value="PUT">PUT</option>
-                        <option value="DELETE">DELETE</option>
-                        <option value="PATCH">PATCH</option>
-                    </select>
-                    <span id="methodBadge" class="method-badge method-post">POST</span>
-                </div>
-
-                <!-- Headers Input -->
-                <div class="input-group">
-                    <label>Headers (JSON)</label>
-                    <textarea id="headers" placeholder='{"Content-Type": "application/json", "Authorization": "Bearer token"}'>{"Content-Type": "application/json"}</textarea>
-                </div>
-
-                <!-- Request Body -->
-                <div class="input-group">
-                    <label>Request Body (JSON)</label>
-                    <textarea id="body" placeholder='{"phone": "9876543210"}'>{"phone": "9876543210"}</textarea>
-                </div>
-
-                <!-- Sample Data Templates -->
-                <div class="input-group">
-                    <label>Sample Data Templates</label>
-                    <select id="sampleData" onchange="loadSampleData()">
-                        <option value="">-- Select a template --</option>
-                        <option value="phone-otp-initiate">Phone OTP Initiate</option>
-                        <option value="phone-otp-verify">Phone OTP Verify</option>
-                        <option value="add-email">Add Email</option>
-                        <option value="verify-email">Verify Email</option>
-                        <option value="complete-profile">Complete Profile</option>
-                        <option value="status-check">Status Check</option>
-                    </select>
-                </div>
-
-                <!-- Visibility Options -->
-                <div class="input-group">
-                    <label>Display Options</label>
-                    <div class="checkbox-group">
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="showBody" checked>
-                            <label for="showBody">Body</label>
+                    <!-- Method + URL row -->
+                    <div class="flex gap-2">
+                        <div class="relative">
+                            <select id="method" onchange="updateMethodBadge()" class="code-input pr-8 appearance-none cursor-pointer font-semibold text-xs w-28">
+                                <option value="GET">GET</option>
+                                <option value="POST" selected>POST</option>
+                                <option value="PUT">PUT</option>
+                                <option value="DELETE">DELETE</option>
+                                <option value="PATCH">PATCH</option>
+                            </select>
                         </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="showHeaders" checked>
-                            <label for="showHeaders">Headers</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="prettyPrint" checked>
-                            <label for="prettyPrint">Pretty Print</label>
-                        </div>
+                        <input type="text" id="endpointPath" placeholder="/api/auth/phone/initiate" class="code-input flex-1">
+                    </div>
+
+                    <!-- Full URL preview -->
+                    <div class="flex items-center gap-2 bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2">
+                        <span id="methodBadge" class="badge-post text-xs font-bold font-mono px-2 py-0.5 rounded">POST</span>
+                        <span id="fullUrlPreview" class="text-xs font-mono text-zinc-400 truncate flex-1">http://localhost:5000/api/auth/phone/initiate</span>
+                        <button onclick="copyUrl()" class="text-zinc-600 hover:text-zinc-300 transition-colors text-xs ml-2" title="Copy URL">⎘</button>
                     </div>
                 </div>
 
-                <!-- Copy URL Button -->
-                <button class="btn-secondary" onclick="copyUrl()">Copy URL</button>
+                <!-- Session/Cookie Info Banner -->
+                <div id="sessionBanner" class="bg-indigo-950/40 border border-indigo-800/50 rounded-xl p-3 flex items-start gap-3">
+                    <span class="text-indigo-400 text-sm mt-0.5">🍪</span>
+                    <div class="text-xs text-indigo-300 leading-relaxed">
+                        <strong class="text-indigo-200">Auto Session Handling ON</strong> — Session tokens from responses are automatically captured and injected into subsequent requests. Cookies from <code class="bg-indigo-900/50 px-1 rounded">Set-Cookie</code> headers are stored and replayed automatically.
+                    </div>
+                </div>
 
-                <div class="loading" id="loading">
-                    <div class="spinner"></div>
-                    <p>Sending request...</p>
+                <!-- Headers -->
+                <div class="bg-zinc-900/60 border border-zinc-800 rounded-xl p-4 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold text-zinc-400 uppercase tracking-widest">Headers</span>
+                        <div class="flex gap-2">
+                            <button onclick="insertStoredToken()" class="text-xs text-indigo-400 hover:text-indigo-300 bg-indigo-950/50 border border-indigo-800/50 px-2 py-1 rounded-md transition-colors">🔑 Inject Token</button>
+                            <button onclick="resetHeaders()" class="text-xs text-zinc-500 hover:text-zinc-300 bg-zinc-800 px-2 py-1 rounded-md transition-colors">Reset</button>
+                        </div>
+                    </div>
+                    <textarea id="headers" rows="4" class="code-input">{"Content-Type": "application/json"}</textarea>
+                    <p class="text-xs text-zinc-600 font-mono">Authorization header auto-injected when session token exists</p>
+                </div>
+
+                <!-- Body -->
+                <div class="bg-zinc-900/60 border border-zinc-800 rounded-xl p-4 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold text-zinc-400 uppercase tracking-widest">Body <span class="text-zinc-600 normal-case font-normal">(JSON)</span></span>
+                        <div class="flex gap-2">
+                            <select id="sampleData" onchange="loadSampleData()" class="text-xs bg-zinc-800 border border-zinc-700 text-zinc-400 rounded-md px-2 py-1 outline-none hover:border-zinc-600 cursor-pointer font-mono">
+                                <option value="">Load template…</option>
+                                <optgroup label="Registration Flow">
+                                    <option value="phone-otp-initiate">Step 1: Phone OTP Initiate</option>
+                                    <option value="phone-otp-verify">Step 2: Phone OTP Verify</option>
+                                    <option value="add-email">Step 3: Add Email</option>
+                                    <option value="verify-email">Step 4: Verify Email OTP</option>
+                                    <option value="complete-profile">Step 5: Complete Profile</option>
+                                </optgroup>
+                                <optgroup label="Other">
+                                    <option value="status-check">Check Registration Status</option>
+                                </optgroup>
+                            </select>
+                            <button onclick="formatBody()" class="text-xs text-zinc-500 hover:text-zinc-300 bg-zinc-800 px-2 py-1 rounded-md transition-colors">Format</button>
+                        </div>
+                    </div>
+                    <textarea id="body" rows="8" class="code-input">{
+  "phone": "9876543210"
+}</textarea>
+                </div>
+
+                <!-- Options Row -->
+                <div class="flex items-center gap-4 px-1">
+                    <label class="flex items-center gap-2 cursor-pointer text-xs text-zinc-500 hover:text-zinc-300 transition-colors">
+                        <input type="checkbox" id="showHeaders" checked class="rounded"> Response Headers
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer text-xs text-zinc-500 hover:text-zinc-300 transition-colors">
+                        <input type="checkbox" id="showBody" checked class="rounded"> Response Body
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer text-xs text-zinc-500 hover:text-zinc-300 transition-colors">
+                        <input type="checkbox" id="prettyPrint" checked class="rounded"> Pretty Print
+                    </label>
+                </div>
+
+                <!-- Send Button -->
+                <button onclick="sendRequest()" id="sendBtn"
+                    class="w-full py-3 rounded-xl bg-brand-500 hover:bg-brand-600 active:scale-[0.99] text-white font-semibold text-sm tracking-wide transition-all duration-150 shadow-lg shadow-brand-500/20 flex items-center justify-center gap-2">
+                    <span id="sendIcon">⚡</span>
+                    <span id="sendLabel">Send Request</span>
+                </button>
+
+                <button onclick="clearAll()" class="w-full py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-500 hover:text-zinc-300 text-xs font-medium transition-all border border-zinc-800">
+                    Clear All
+                </button>
+
+                <!-- Flow Reference -->
+                <div class="bg-zinc-900/40 border border-zinc-800 rounded-xl p-4">
+                    <p class="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-3">📚 Flow Reference</p>
+                    <ol class="space-y-1.5 text-xs text-zinc-500 font-mono">
+                        <li><span class="text-zinc-600 mr-2">01</span>Register: Initiate → Verify Phone → Add Email → Verify Email → Complete Profile</li>
+                        <li><span class="text-zinc-600 mr-2">02</span>Login: Initiate → Verify Phone (returns sessionToken)</li>
+                        <li><span class="text-zinc-600 mr-2">03</span>Protected: Authorization: Bearer &lt;token&gt; (auto-injected)</li>
+                    </ol>
                 </div>
             </div>
 
-            <!-- RIGHT PANEL: RESPONSE -->
-            <div class="section">
-                <div class="section-title">📥 Response</div>
+            <!-- ══════════════════════════ RIGHT: RESPONSE ══════════════════════════ -->
+            <div class="space-y-4 response-panel">
 
-                <!-- Response Status -->
-                <div id="responseStatus" style="display:none;">
-                    <span class="status-badge" id="statusBadge"></span>
-                </div>
+                <!-- Status Bar -->
+                <div id="statusBar" class="bg-zinc-900/60 border border-zinc-800 rounded-xl p-4 hidden animate-slide-up">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <span id="statusCode" class="text-2xl font-bold font-mono text-zinc-100"></span>
+                            <span id="statusText" class="text-sm text-zinc-400"></span>
+                            <span id="statusIndicator" class="w-2.5 h-2.5 rounded-full"></span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span id="responseTimeDisplay" class="text-xs font-mono text-zinc-500 bg-zinc-800 px-2 py-1 rounded">— ms</span>
+                            <button onclick="copyResponse()" class="text-xs text-zinc-400 hover:text-zinc-200 bg-zinc-800 hover:bg-zinc-700 px-3 py-1.5 rounded-lg transition-all">⎘ Copy</button>
+                        </div>
+                    </div>
 
-                <!-- Response Time -->
-                <div class="input-group" style="display:none" id="responseTimeDiv">
-                    <label>Response Time</label>
-                    <input type="text" id="responseTime" readonly placeholder="0ms">
-                </div>
-
-                <!-- Headers Response -->
-                <div class="input-group" id="headersResponseDiv" style="display:none">
-                    <label>Response Headers</label>
-                    <div class="response-box response-headers">
-                        <pre id="headersResponse">No response yet</pre>
+                    <!-- Cookie/Token Auto-Capture Notice -->
+                    <div id="tokenCaptured" class="hidden mt-3 flex items-center gap-2 text-xs text-emerald-400 bg-emerald-950/30 border border-emerald-800/40 rounded-lg px-3 py-2">
+                        <span>✓</span> Session token captured and stored automatically
+                    </div>
+                    <div id="cookieCaptured" class="hidden mt-2 flex items-center gap-2 text-xs text-sky-400 bg-sky-950/30 border border-sky-800/40 rounded-lg px-3 py-2">
+                        <span>🍪</span> <span id="cookieInfo">Cookies captured</span>
                     </div>
                 </div>
 
-                <!-- Data Response -->
-                <div class="input-group" id="bodyResponseDiv" style="display:none">
-                    <label>Response Body</label>
-                    <div class="response-box response-body">
-                        <pre id="bodyResponse">No response yet</pre>
+                <!-- Loading -->
+                <div id="loading" class="hidden bg-zinc-900/60 border border-zinc-800 rounded-xl p-8 text-center">
+                    <div class="w-8 h-8 border-2 border-zinc-700 border-t-brand-500 rounded-full animate-spin mx-auto mb-3"></div>
+                    <p class="text-sm text-zinc-500">Sending request…</p>
+                </div>
+
+                <!-- Tabs for Response -->
+                <div id="responseTabs" class="hidden animate-slide-up">
+                    <div class="flex gap-1 bg-zinc-900/60 border border-zinc-800 rounded-xl p-1 mb-0">
+                        <button onclick="switchTab('body')" id="tab-body" class="tab-active flex-1 text-xs py-2 px-3 rounded-lg font-medium transition-all">Body</button>
+                        <button onclick="switchTab('headers')" id="tab-headers" class="tab-inactive flex-1 text-xs py-2 px-3 rounded-lg font-medium transition-all">Headers</button>
+                        <button onclick="switchTab('cookies')" id="tab-cookies" class="tab-inactive flex-1 text-xs py-2 px-3 rounded-lg font-medium transition-all">Cookies & Session</button>
                     </div>
                 </div>
 
-                <!-- Error Response -->
-                <div class="input-group" id="errorResponseDiv" style="display:none">
-                    <label>Error Details</label>
-                    <div class="response-box response-error">
-                        <pre id="errorResponse">No errors</pre>
+                <!-- Body Tab -->
+                <div id="panel-body" class="bg-zinc-900/60 border border-zinc-800 rounded-xl overflow-hidden hidden animate-slide-up">
+                    <div class="flex items-center justify-between px-4 py-2.5 border-b border-zinc-800">
+                        <span class="text-xs font-semibold text-zinc-500 uppercase tracking-widest">Response Body</span>
+                        <span id="bodySize" class="text-xs font-mono text-zinc-600"></span>
+                    </div>
+                    <div class="max-h-[500px] overflow-y-auto p-4">
+                        <pre id="bodyResponse" class="text-xs font-mono text-zinc-300 whitespace-pre-wrap break-words leading-relaxed"></pre>
                     </div>
                 </div>
 
+                <!-- Headers Tab -->
+                <div id="panel-headers" class="bg-zinc-900/60 border border-zinc-800 rounded-xl overflow-hidden hidden">
+                    <div class="flex items-center px-4 py-2.5 border-b border-zinc-800">
+                        <span class="text-xs font-semibold text-zinc-500 uppercase tracking-widest">Response Headers</span>
+                    </div>
+                    <div class="max-h-[400px] overflow-y-auto">
+                        <table class="w-full text-xs font-mono">
+                            <tbody id="headersTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Cookies & Session Tab -->
+                <div id="panel-cookies" class="bg-zinc-900/60 border border-zinc-800 rounded-xl overflow-hidden hidden">
+                    <div class="flex items-center px-4 py-2.5 border-b border-zinc-800">
+                        <span class="text-xs font-semibold text-zinc-500 uppercase tracking-widest">Cookies & Session Tokens</span>
+                    </div>
+                    <div class="p-4 space-y-3" id="cookiesPanel">
+                        <p class="text-xs text-zinc-600 font-mono">No cookies or session data yet.</p>
+                    </div>
+                </div>
+
+                <!-- Error Panel -->
+                <div id="panel-error" class="bg-red-950/30 border border-red-900/50 rounded-xl overflow-hidden hidden animate-slide-up">
+                    <div class="flex items-center px-4 py-2.5 border-b border-red-900/40">
+                        <span class="text-xs font-semibold text-red-400 uppercase tracking-widest">Error</span>
+                    </div>
+                    <div class="p-4">
+                        <pre id="errorResponse" class="text-xs font-mono text-red-300 whitespace-pre-wrap"></pre>
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div id="emptyState" class="bg-zinc-900/30 border border-dashed border-zinc-800 rounded-xl p-12 text-center">
+                    <div class="text-3xl mb-3 opacity-30">⚡</div>
+                    <p class="text-sm text-zinc-600">Response will appear here</p>
+                    <p class="text-xs text-zinc-700 mt-1 font-mono">Select an endpoint and click Send</p>
+                </div>
 
             </div>
         </div>
     </div>
 
     <script>
-        // Sample data templates
+        // ─────────────────────────────────────────
+        // STATE
+        // ─────────────────────────────────────────
+        const state = {
+            sessionToken: localStorage.getItem('earnmitra_session_token') || null,
+            cookies: JSON.parse(localStorage.getItem('earnmitra_cookies') || '{}'),
+            lastResponse: null,
+            activeTab: 'body',
+        };
+
+        // ─────────────────────────────────────────
+        // DATA
+        // ─────────────────────────────────────────
         const sampleDataTemplates = {
             'phone-otp-initiate': {
-                url: 'http://localhost:5000/api/auth/phone/initiate',
-                method: 'POST',
+                path: '/api/auth/phone/initiate', method: 'POST',
                 headers: '{"Content-Type": "application/json"}',
-                body: '{"phone": "9876543210"}'
+                body: '{\n  "phone": "9876543210"\n}'
             },
             'phone-otp-verify': {
-                url: 'http://localhost:5000/api/auth/phone/verify',
-                method: 'POST',
+                path: '/api/auth/phone/verify', method: 'POST',
                 headers: '{"Content-Type": "application/json"}',
-                body: '{"token": "TOKEN_HERE", "otp": "123456", "phone": "9876543210"}'
+                body: '{\n  "token": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6",\n  "otp": "123456",\n  "phone": "9876543210",\n  "deviceInfo": {\n    "deviceName": "Samsung Galaxy A12",\n    "osType": "Android",\n    "browserType": "Chrome",\n    "screenResolution": "1080x2400",\n    "timezone": "Asia/Kolkata"\n  }\n}'
             },
             'add-email': {
-                url: 'http://localhost:5000/api/auth/register/add-email',
-                method: 'POST',
+                path: '/api/auth/register/add-email', method: 'POST',
                 headers: '{"Content-Type": "application/json"}',
-                body: '{"phone": "9876543210", "email": "user@example.com"}'
+                body: '{\n  "email": "user@example.com"\n}'
             },
             'verify-email': {
-                url: 'http://localhost:5000/api/auth/register/verify-email',
-                method: 'POST',
+                path: '/api/auth/register/verify-email', method: 'POST',
                 headers: '{"Content-Type": "application/json"}',
-                body: '{"token": "TOKEN_HERE", "otp": "123456", "email": "user@example.com"}'
+                body: '{\n  "token": "email_token_a1b2c3d4e5f6",\n  "otp": "123456",\n  "email": "user@example.com"\n}'
             },
             'complete-profile': {
-                url: 'http://localhost:5000/api/auth/register/complete-profile',
-                method: 'POST',
+                path: '/api/auth/register/complete-profile', method: 'POST',
                 headers: '{"Content-Type": "application/json"}',
-                body: '{"phone": "9876543210", "first_name": "John", "last_name": "Doe", "gender": "male", "date_of_birth": "1990-01-15"}'
+                body: '{\n  "firstName": "John",\n  "lastName": "Doe",\n  "dob": "1990-01-15",\n  "address": "123 Main Street",\n  "city": "Delhi",\n  "state": "DL",\n  "pincode": "110001"\n}'
             },
             'status-check': {
-                url: 'http://localhost:5000/api/auth/status?phone=9876543210',
-                method: 'GET',
+                path: '/api/auth/status?phone=9876543210', method: 'GET',
                 headers: '{"Content-Type": "application/json"}',
                 body: ''
             }
         };
 
-        // Endpoint presets
-        const endpoints = {
-            'phone-initiate': {
-                url: '/api/auth/phone/initiate',
-                method: 'POST',
-                template: 'phone-otp-initiate'
-            },
-            'phone-verify': {
-                url: '/api/auth/phone/verify',
-                method: 'POST',
-                template: 'phone-otp-verify'
-            },
-            'register-add-email': {
-                url: '/api/auth/register/add-email',
-                method: 'POST',
-                template: 'add-email'
-            },
-            'register-verify-email': {
-                url: '/api/auth/register/verify-email',
-                method: 'POST',
-                template: 'verify-email'
-            },
-            'register-complete': {
-                url: '/api/auth/register/complete-profile',
-                method: 'POST',
-                template: 'complete-profile'
-            },
-            'auth-status': {
-                url: '/api/auth/status?phone=9876543210',
-                method: 'GET',
-                template: 'status-check'
-            },
-            'health-check': {
-                url: '/api/health',
-                method: 'GET',
-                template: null
-            },
-            'config': {
-                url: '/api/config',
-                method: 'GET',
-                template: null
-            },
-            'db-health': {
-                url: '/api/db-health',
-                method: 'GET',
-                template: null
-            }
+        const endpointPresets = {
+            'phone-initiate':        { path: '/api/auth/phone/initiate',             method: 'POST', template: 'phone-otp-initiate' },
+            'phone-verify':          { path: '/api/auth/phone/verify',               method: 'POST', template: 'phone-otp-verify' },
+            'register-add-email':    { path: '/api/auth/register/add-email',         method: 'POST', template: 'add-email' },
+            'register-verify-email': { path: '/api/auth/register/verify-email',      method: 'POST', template: 'verify-email' },
+            'register-complete':     { path: '/api/auth/register/complete-profile',  method: 'POST', template: 'complete-profile' },
+            'auth-status':           { path: '/api/auth/status?phone=9876543210',    method: 'GET',  template: 'status-check' },
+            'health-check':          { path: '/api/health',                          method: 'GET',  template: null },
+            'config':                { path: '/api/config',                          method: 'GET',  template: null },
+            'db-health':             { path: '/api/db-health',                       method: 'GET',  template: null },
         };
 
-        // Load endpoint
-        function loadEndpoint() {
-            const select = document.getElementById('endpointSelect');
-            const key = select.value;
-            
-            if (key && endpoints[key]) {
-                const endpoint = endpoints[key];
-                const baseUrl = document.getElementById('endpointUrl').value.replace(/\/$/, '');
-                
-                document.getElementById('endpointUrl').value = baseUrl + endpoint.url;
-                document.getElementById('method').value = endpoint.method;
-                updateMethodBadge();
-                
-                if (endpoint.template) {
-                    document.getElementById('sampleData').value = endpoint.template;
-                    loadSampleData();
-                }
-            }
+        // ─────────────────────────────────────────
+        // INIT
+        // ─────────────────────────────────────────
+        function init() {
+            updateMethodBadge();
+            updateUrlPreview();
+            refreshTokenStatus();
+            document.getElementById('endpointPath').addEventListener('input', updateUrlPreview);
+            document.getElementById('baseUrl').addEventListener('input', updateUrlPreview);
+            document.getElementById('method').addEventListener('change', updateMethodBadge);
         }
 
-        // Load sample data
-        function loadSampleData() {
-            const select = document.getElementById('sampleData');
-            const key = select.value;
-            
-            if (key && sampleDataTemplates[key]) {
-                const template = sampleDataTemplates[key];
-                const baseUrl = document.getElementById('endpointUrl').value.replace(/\/$/, '');
-                
-                document.getElementById('endpointUrl').value = template.url;
-                document.getElementById('method').value = template.method;
-                document.getElementById('headers').value = template.headers;
-                document.getElementById('body').value = template.body;
-                updateMethodBadge();
-            }
+        // ─────────────────────────────────────────
+        // URL & METHOD
+        // ─────────────────────────────────────────
+        function getFullUrl() {
+            const base = document.getElementById('baseUrl').value.replace(/\/$/, '');
+            const path = document.getElementById('endpointPath').value || '';
+            return base + path;
         }
 
-        // Update method badge
+        function updateUrlPreview() {
+            document.getElementById('fullUrlPreview').textContent = getFullUrl();
+        }
+
         function updateMethodBadge() {
-            const method = document.getElementById('method').value;
+            const method = document.getElementById('method').value.toLowerCase();
             const badge = document.getElementById('methodBadge');
-            badge.textContent = method;
-            badge.className = 'method-badge method-' + method.toLowerCase();
+            badge.textContent = method.toUpperCase();
+            badge.className = `badge-${method} text-xs font-bold font-mono px-2 py-0.5 rounded`;
         }
 
-        // Send request
+        function loadEndpoint() {
+            const key = document.getElementById('endpointSelect').value;
+            if (!key || !endpointPresets[key]) return;
+            const ep = endpointPresets[key];
+            document.getElementById('endpointPath').value = ep.path;
+            document.getElementById('method').value = ep.method;
+            updateMethodBadge();
+            updateUrlPreview();
+            if (ep.template) {
+                document.getElementById('sampleData').value = ep.template;
+                loadSampleData(false); // don't override path
+            }
+        }
+
+        function loadSampleData(updatePath = true) {
+            const key = document.getElementById('sampleData').value;
+            if (!key || !sampleDataTemplates[key]) return;
+            const t = sampleDataTemplates[key];
+            if (updatePath) {
+                document.getElementById('endpointPath').value = t.path;
+                updateUrlPreview();
+            }
+            document.getElementById('method').value = t.method;
+            document.getElementById('headers').value = t.headers;
+            document.getElementById('body').value = t.body;
+            updateMethodBadge();
+        }
+
+        function resetHeaders() {
+            document.getElementById('headers').value = '{"Content-Type": "application/json"}';
+        }
+
+        function formatBody() {
+            try {
+                const val = document.getElementById('body').value.trim();
+                if (val) document.getElementById('body').value = JSON.stringify(JSON.parse(val), null, 2);
+            } catch (e) { /* not valid json, leave as is */ }
+        }
+
+        // ─────────────────────────────────────────
+        // SESSION / COOKIE MANAGEMENT
+        // ─────────────────────────────────────────
+        function storeSessionToken(token) {
+            state.sessionToken = token;
+            localStorage.setItem('earnmitra_session_token', token);
+            refreshTokenStatus();
+        }
+
+        function clearStoredToken() {
+            state.sessionToken = null;
+            localStorage.removeItem('earnmitra_session_token');
+            state.cookies = {};
+            localStorage.removeItem('earnmitra_cookies');
+            refreshTokenStatus();
+        }
+
+        function storeCookie(name, value, meta = {}) {
+            state.cookies[name] = { value, ...meta, captured: new Date().toISOString() };
+            localStorage.setItem('earnmitra_cookies', JSON.stringify(state.cookies));
+        }
+
+        function refreshTokenStatus() {
+            const tokenDiv = document.getElementById('tokenStatus');
+            const noTokenDiv = document.getElementById('noTokenStatus');
+            const pill = document.getElementById('tokenPill');
+            if (state.sessionToken) {
+                tokenDiv.classList.remove('hidden');
+                tokenDiv.classList.add('flex');
+                noTokenDiv.classList.add('hidden');
+                pill.textContent = state.sessionToken.substring(0, 18) + '…';
+            } else {
+                tokenDiv.classList.add('hidden');
+                tokenDiv.classList.remove('flex');
+                noTokenDiv.classList.remove('hidden');
+            }
+        }
+
+        function insertStoredToken() {
+            if (!state.sessionToken) {
+                alert('No session token stored yet. Complete a phone verification first.');
+                return;
+            }
+            try {
+                let headers = JSON.parse(document.getElementById('headers').value || '{}');
+                headers['Authorization'] = 'Bearer ' + state.sessionToken;
+                document.getElementById('headers').value = JSON.stringify(headers, null, 2);
+            } catch (e) {
+                alert('Invalid headers JSON. Fix it first.');
+            }
+        }
+
+        // Auto-inject session token into headers if present
+        function buildHeaders(userHeaders) {
+            let headers = { ...userHeaders };
+            if (state.sessionToken && !headers['Authorization']) {
+                headers['Authorization'] = 'Bearer ' + state.sessionToken;
+            }
+            // Inject stored cookies
+            const cookieEntries = Object.entries(state.cookies);
+            if (cookieEntries.length > 0) {
+                const cookieStr = cookieEntries.map(([k, v]) => `${k}=${v.value}`).join('; ');
+                headers['Cookie'] = cookieStr;
+            }
+            return headers;
+        }
+
+        // Parse Set-Cookie headers from response
+        function captureResponseCookies(response) {
+            const setCookie = response.headers.get('set-cookie');
+            const captured = [];
+            if (setCookie) {
+                // May be comma-separated in some environments
+                const parts = setCookie.split(/,(?=[^ ])/);
+                parts.forEach(part => {
+                    const [nameVal, ...attrs] = part.trim().split(';');
+                    const [name, value] = nameVal.trim().split('=');
+                    if (name && value !== undefined) {
+                        const meta = {};
+                        attrs.forEach(a => {
+                            const [k, v] = a.trim().split('=');
+                            meta[k.toLowerCase().trim()] = v ? v.trim() : true;
+                        });
+                        storeCookie(name.trim(), value.trim(), meta);
+                        captured.push(name.trim());
+                    }
+                });
+            }
+            return captured;
+        }
+
+        // Extract session token from response body
+        function captureSessionToken(data) {
+            if (!data || typeof data !== 'object') return false;
+            const token = data?.data?.sessionToken || data?.sessionToken || data?.token || data?.accessToken;
+            if (token) { storeSessionToken(token); return true; }
+            return false;
+        }
+
+        // ─────────────────────────────────────────
+        // SEND REQUEST
+        // ─────────────────────────────────────────
         async function sendRequest() {
-            const url = document.getElementById('endpointUrl').value.trim();
+            const url = getFullUrl();
             const method = document.getElementById('method').value;
             const headersText = document.getElementById('headers').value.trim();
-            const body = document.getElementById('body').value.trim();
-            
-            if (!url) {
-                alert('Please enter an endpoint URL');
+            const bodyText = document.getElementById('body').value.trim();
+
+            if (!url || url === 'http://localhost:5000') {
+                alert('Please enter a valid endpoint URL');
                 return;
             }
 
-            // Show loading
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('responseStatus').style.display = 'none';
-            
+            setLoading(true);
+            hideAllPanels();
+
             try {
-                // Parse headers
-                let headers = {};
-                try {
-                    if (headersText) {
-                        headers = JSON.parse(headersText);
-                    }
-                } catch (e) {
-                    alert('Invalid headers JSON: ' + e.message);
-                    document.getElementById('loading').style.display = 'none';
-                    return;
+                let userHeaders = {};
+                if (headersText) {
+                    try { userHeaders = JSON.parse(headersText); }
+                    catch (e) { alert('Invalid headers JSON: ' + e.message); setLoading(false); return; }
                 }
 
-                // Parse body
+                const finalHeaders = buildHeaders(userHeaders);
+
                 let requestBody = null;
-                if (body && method !== 'GET') {
-                    try {
-                        requestBody = JSON.parse(body);
-                    } catch (e) {
-                        alert('Invalid request body JSON: ' + e.message);
-                        document.getElementById('loading').style.display = 'none';
-                        return;
-                    }
+                if (bodyText && method !== 'GET') {
+                    try { requestBody = JSON.parse(bodyText); }
+                    catch (e) { alert('Invalid body JSON: ' + e.message); setLoading(false); return; }
                 }
 
-                // Prepare fetch options
                 const options = {
-                    method: method,
-                    headers: headers
+                    method,
+                    headers: finalHeaders,
+                    credentials: 'include', // send cookies automatically for same-origin
                 };
+                if (requestBody) options.body = JSON.stringify(requestBody);
 
-                if (requestBody && method !== 'GET') {
-                    options.body = JSON.stringify(requestBody);
-                }
+                console.log('📤 REQUEST:', { method, url, headers: finalHeaders, body: requestBody });
 
-                // Send request
-                const startTime = performance.now();
+                const t0 = performance.now();
                 const response = await fetch(url, options);
-                const endTime = performance.now();
-                const responseTime = Math.round(endTime - startTime);
+                const elapsed = Math.round(performance.now() - t0);
 
-                // Parse response
                 let responseData;
+                const contentType = response.headers.get('content-type') || '';
                 try {
-                    responseData = await response.json();
+                    responseData = contentType.includes('json') ? await response.json() : await response.text();
                 } catch (e) {
-                    responseData = await response.text();
+                    responseData = await response.text().catch(() => '(empty response)');
                 }
 
-                // Display response
-                displayResponse(response, responseData, responseTime);
+                console.log('📥 RESPONSE:', { status: response.status, data: responseData, time: elapsed + 'ms' });
+
+                // Auto capture
+                const tokenCaptured = captureSessionToken(responseData);
+                const capturedCookies = captureResponseCookies(response);
+
+                state.lastResponse = { response, data: responseData, time: elapsed };
+                displayResponse(response, responseData, elapsed, tokenCaptured, capturedCookies);
 
             } catch (error) {
                 displayError(error);
             } finally {
-                document.getElementById('loading').style.display = 'none';
+                setLoading(false);
             }
         }
 
-        // Display response
-        function displayResponse(response, data, responseTime) {
-            const showHeaders = document.getElementById('showHeaders').checked;
-            const showBody = document.getElementById('showBody').checked;
+        // ─────────────────────────────────────────
+        // DISPLAY
+        // ─────────────────────────────────────────
+        function setLoading(show) {
+            const btn = document.getElementById('sendBtn');
+            const label = document.getElementById('sendLabel');
+            const icon = document.getElementById('sendIcon');
+            const loader = document.getElementById('loading');
+            if (show) {
+                btn.disabled = true;
+                btn.classList.add('opacity-70', 'cursor-not-allowed');
+                label.textContent = 'Sending…';
+                icon.textContent = '';
+                icon.innerHTML = '<span class="inline-block w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></span>';
+                loader.classList.remove('hidden');
+            } else {
+                btn.disabled = false;
+                btn.classList.remove('opacity-70', 'cursor-not-allowed');
+                label.textContent = 'Send Request';
+                icon.innerHTML = '⚡';
+                loader.classList.add('hidden');
+            }
+        }
+
+        function hideAllPanels() {
+            ['panel-body', 'panel-headers', 'panel-cookies', 'panel-error', 'statusBar', 'responseTabs', 'tokenCaptured', 'cookieCaptured'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById('emptyState').classList.remove('hidden');
+        }
+
+        function displayResponse(response, data, elapsed, tokenCaptured, capturedCookies) {
+            document.getElementById('emptyState').classList.add('hidden');
+
+            // Status bar
+            const statusBar = document.getElementById('statusBar');
+            statusBar.classList.remove('hidden');
+            document.getElementById('statusCode').textContent = response.status;
+            document.getElementById('statusText').textContent = response.statusText;
+            document.getElementById('responseTimeDisplay').textContent = elapsed + ' ms';
+
+            const indicator = document.getElementById('statusIndicator');
+            if (response.ok) {
+                indicator.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400';
+            } else {
+                indicator.className = 'w-2.5 h-2.5 rounded-full bg-red-400';
+            }
+
+            // Token captured notice
+            if (tokenCaptured) {
+                document.getElementById('tokenCaptured').classList.remove('hidden');
+                document.getElementById('tokenCaptured').classList.add('flex');
+            }
+            if (capturedCookies.length > 0) {
+                document.getElementById('cookieCaptured').classList.remove('hidden');
+                document.getElementById('cookieCaptured').classList.add('flex');
+                document.getElementById('cookieInfo').textContent = `Cookies captured: ${capturedCookies.join(', ')}`;
+            }
+
+            // Tabs
+            document.getElementById('responseTabs').classList.remove('hidden');
+
+            // Body
             const prettyPrint = document.getElementById('prettyPrint').checked;
+            let bodyText = typeof data === 'object' && prettyPrint ? JSON.stringify(data, null, 2) : String(data);
+            document.getElementById('bodyResponse').textContent = bodyText;
+            document.getElementById('bodySize').textContent = new Blob([bodyText]).size + ' B';
+            document.getElementById('panel-body').classList.remove('hidden');
 
-            // Show status
-            document.getElementById('responseStatus').style.display = 'block';
-            const statusBadge = document.getElementById('statusBadge');
-            statusBadge.textContent = `Status: ${response.status} ${response.statusText}`;
-            statusBadge.className = 'status-badge ' + (response.ok ? 'status-success' : 'status-error');
+            // Headers table
+            const tbody = document.getElementById('headersTable');
+            tbody.innerHTML = '';
+            response.headers.forEach((value, name) => {
+                const tr = document.createElement('tr');
+                tr.className = 'border-b border-zinc-800 hover:bg-zinc-800/30';
+                tr.innerHTML = `
+                    <td class="px-4 py-2 text-zinc-500 font-mono text-xs w-1/3">${name}</td>
+                    <td class="px-4 py-2 text-zinc-300 font-mono text-xs break-all">${value}</td>`;
+                tbody.appendChild(tr);
+            });
 
-            // Show time
-            document.getElementById('responseTimeDiv').style.display = 'block';
-            document.getElementById('responseTime').value = responseTime + 'ms';
+            // Cookies panel
+            renderCookiesPanel();
 
-            // Show headers
-            if (showHeaders) {
-                document.getElementById('headersResponseDiv').style.display = 'block';
-                let headersText = '';
-                response.headers.forEach((value, name) => {
-                    headersText += `${name}: ${value}\n`;
-                });
-                document.getElementById('headersResponse').textContent = headersText || 'No headers';
-            } else {
-                document.getElementById('headersResponseDiv').style.display = 'none';
-            }
-
-            // Show body
-            if (showBody) {
-                document.getElementById('bodyResponseDiv').style.display = 'block';
-                let bodyText = data;
-                if (typeof data === 'object' && prettyPrint) {
-                    bodyText = JSON.stringify(data, null, 2);
-                }
-                document.getElementById('bodyResponse').textContent = bodyText;
-            } else {
-                document.getElementById('bodyResponseDiv').style.display = 'none';
-            }
-
-            document.getElementById('errorResponseDiv').style.display = 'none';
+            switchTab('body');
         }
 
-        // Display error
+        function renderCookiesPanel() {
+            const panel = document.getElementById('cookiesPanel');
+            const allData = [];
+
+            if (state.sessionToken) {
+                allData.push({ label: 'Session Token', value: state.sessionToken, type: 'token' });
+            }
+
+            Object.entries(state.cookies).forEach(([name, meta]) => {
+                allData.push({ label: name, value: meta.value, type: 'cookie', meta });
+            });
+
+            if (allData.length === 0) {
+                panel.innerHTML = '<p class="text-xs text-zinc-600 font-mono">No cookies or session data captured yet.</p>';
+                return;
+            }
+
+            panel.innerHTML = allData.map(item => `
+                <div class="bg-zinc-950/50 border border-zinc-800 rounded-lg p-3 space-y-1">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold ${item.type === 'token' ? 'text-indigo-400' : 'text-sky-400'}">${item.label}</span>
+                        <span class="text-xs px-2 py-0.5 rounded-full ${item.type === 'token' ? 'bg-indigo-950 text-indigo-400' : 'bg-sky-950 text-sky-400'}">${item.type}</span>
+                    </div>
+                    <p class="text-xs font-mono text-zinc-400 break-all">${item.value}</p>
+                    ${item.meta?.expires ? `<p class="text-xs text-zinc-600">Expires: ${item.meta.expires}</p>` : ''}
+                    ${item.meta?.captured ? `<p class="text-xs text-zinc-700">Captured: ${new Date(item.meta.captured).toLocaleTimeString()}</p>` : ''}
+                </div>
+            `).join('');
+        }
+
         function displayError(error) {
-            document.getElementById('responseStatus').style.display = 'block';
-            const statusBadge = document.getElementById('statusBadge');
-            statusBadge.textContent = 'Error';
-            statusBadge.className = 'status-badge status-error';
-
-            document.getElementById('headersResponseDiv').style.display = 'none';
-            document.getElementById('bodyResponseDiv').style.display = 'none';
-            
-            document.getElementById('errorResponseDiv').style.display = 'block';
-            document.getElementById('errorResponse').textContent = error.message || 'Unknown error occurred';
+            document.getElementById('emptyState').classList.add('hidden');
+            document.getElementById('statusBar').classList.remove('hidden');
+            document.getElementById('statusCode').textContent = '—';
+            document.getElementById('statusText').textContent = 'Network Error';
+            document.getElementById('statusIndicator').className = 'w-2.5 h-2.5 rounded-full bg-red-400';
+            document.getElementById('panel-error').classList.remove('hidden');
+            document.getElementById('errorResponse').textContent = error.message || 'Unknown error occurred.\n\nMake sure your server is running and CORS is configured.';
         }
 
-        // Clear all
-        function clearAll() {
-            document.getElementById('endpointUrl').value = 'http://localhost:5000';
-            document.getElementById('method').value = 'POST';
-            document.getElementById('headers').value = '{"Content-Type": "application/json"}';
-            document.getElementById('body').value = '{"phone": "9876543210"}';
-            document.getElementById('endpointSelect').value = '';
-            document.getElementById('sampleData').value = '';
-            updateMethodBadge();
-            
-            document.getElementById('responseStatus').style.display = 'none';
-            document.getElementById('headersResponseDiv').style.display = 'none';
-            document.getElementById('bodyResponseDiv').style.display = 'none';
-            document.getElementById('errorResponseDiv').style.display = 'none';
-            document.getElementById('responseTimeDiv').style.display = 'none';
-        }
-
-        // Copy URL
-        function copyUrl() {
-            const url = document.getElementById('endpointUrl').value;
-            navigator.clipboard.writeText(url).then(() => {
-                alert('URL copied to clipboard!');
+        // ─────────────────────────────────────────
+        // TABS
+        // ─────────────────────────────────────────
+        function switchTab(tab) {
+            state.activeTab = tab;
+            ['body', 'headers', 'cookies'].forEach(t => {
+                const btn = document.getElementById('tab-' + t);
+                const panel = document.getElementById('panel-' + t);
+                if (t === tab) {
+                    btn.className = 'tab-active flex-1 text-xs py-2 px-3 rounded-lg font-medium transition-all';
+                    panel.classList.remove('hidden');
+                } else {
+                    btn.className = 'tab-inactive flex-1 text-xs py-2 px-3 rounded-lg font-medium transition-all';
+                    panel.classList.add('hidden');
+                }
             });
         }
 
-        // Initialize
-        updateMethodBadge();
+        // ─────────────────────────────────────────
+        // UTILS
+        // ─────────────────────────────────────────
+        function clearAll() {
+            document.getElementById('endpointPath').value = '';
+            document.getElementById('method').value = 'POST';
+            document.getElementById('headers').value = '{"Content-Type": "application/json"}';
+            document.getElementById('body').value = '{\n  "phone": "9876543210"\n}';
+            document.getElementById('endpointSelect').value = '';
+            document.getElementById('sampleData').value = '';
+            updateMethodBadge();
+            updateUrlPreview();
+            hideAllPanels();
+        }
+
+        function copyUrl() {
+            navigator.clipboard.writeText(getFullUrl()).then(() => {
+                const btn = event.target;
+                btn.textContent = '✓';
+                setTimeout(() => btn.textContent = '⎘', 1500);
+            });
+        }
+
+        function copyResponse() {
+            const text = document.getElementById('bodyResponse').textContent || document.getElementById('errorResponse').textContent;
+            if (text) {
+                navigator.clipboard.writeText(text).then(() => {
+                    const btn = event.target;
+                    btn.textContent = '✓ Copied';
+                    setTimeout(() => btn.textContent = '⎘ Copy', 1500);
+                });
+            }
+        }
+
+        // ─────────────────────────────────────────
+        // BOOT
+        // ─────────────────────────────────────────
+        init();
     </script>
 </body>
 </html>
