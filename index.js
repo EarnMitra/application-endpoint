@@ -12,6 +12,7 @@ const {
   databaseHealthMiddleware
 } = require('./src/middlewares');
 const authRoutes = require('./src/routes/auth');
+const userRoutes = require('./src/routes/user');
 const rateLimiter = require('./src/routes/auth/rateLimiter'); // BUG FIX #4: Import for shutdown
 
 const app = express();
@@ -40,7 +41,36 @@ try {
 }
 
 // Global Middleware
-app.use(cors());
+
+// CORS Configuration - Allow all origins for API access
+app.use(cors({
+  origin: '*', // Allow all origins
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-App-Mode', 'X-Output-Type'],
+  credentials: false, // Set to true if you need cookies
+  optionsSuccessStatus: 200
+}));
+
+// Security Headers Middleware
+app.use((req, res, next) => {
+  // Allow cross-origin
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-App-Mode, X-Output-Type');
+  
+  // Security headers (not too strict for API)
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('Referrer-Policy', 'no-referrer'); // Change from strict to no-referrer for APIs
+  
+  // Cache headers for API responses
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  
+  next();
+});
+
 app.use(express.json());
 
 // Application Mode Middleware (must be first to set req.appMode)
@@ -63,57 +93,8 @@ app.use(databaseHealthMiddleware);
 // Auth Routes
 app.use('/api/auth', authRoutes);
 
-// Routes
-app.get('/api/health', (req, res) => {
-  res.success(
-    { status: 'Server is running', mode: req.appMode },
-    'Health check passed',
-    200
-  );
-});
-
-/**
- * Configuration Endpoint
- * Exposes app configuration for branches to consume
- * Other branches/routes can access this configuration
- */
-app.get('/api/config', (req, res) => {
-  res.success(
-    req.appConfig,
-    'Application configuration retrieved',
-    200
-  );
-});
-
-/**
- * Database Health Endpoint
- * Checks database connection status and pool statistics
- */
-app.get('/api/db-health', async (req, res) => {
-  try {
-    const health = await req.dbHealth();
-    
-    if (health.connected) {
-      res.success(
-        health,
-        'Database connection healthy',
-        200
-      );
-    } else {
-      res.error(
-        health,
-        'Database connection failed',
-        503
-      );
-    }
-  } catch (error) {
-    res.error(
-      { error: error.message },
-      'Failed to check database health',
-      500
-    );
-  }
-});
+// User Routes
+app.use('/api/user', userRoutes);
 
 /**
  * App State Endpoint
@@ -160,6 +141,39 @@ app.get('/api/connection-status', (req, res) => {
       500
     );
   }
+});
+
+/**
+ * CORS Check Endpoint
+ * Diagnostic endpoint to verify CORS configuration is working
+ */
+app.get('/api/cors-check', (req, res) => {
+  res.success(
+    {
+      corsEnabled: true,
+      allowedOrigins: '*',
+      allowedMethods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-App-Mode', 'X-Output-Type'],
+      credentials: false,
+      headers: {
+        'Access-Control-Allow-Origin': res.getHeader('Access-Control-Allow-Origin'),
+        'Access-Control-Allow-Methods': res.getHeader('Access-Control-Allow-Methods'),
+        'Access-Control-Allow-Headers': res.getHeader('Access-Control-Allow-Headers'),
+        'Referrer-Policy': res.getHeader('Referrer-Policy'),
+        'X-Content-Type-Options': res.getHeader('X-Content-Type-Options'),
+        'X-Frame-Options': res.getHeader('X-Frame-Options'),
+        'Cache-Control': res.getHeader('Cache-Control')
+      },
+      requestHeaders: {
+        origin: req.get('origin'),
+        referer: req.get('referer'),
+        userAgent: req.get('user-agent')
+      },
+      timestamp: new Date().toISOString()
+    },
+    'CORS configuration verified',
+    200
+  );
 });
 
 // 404 Handler
@@ -213,15 +227,16 @@ app.listen(PORT, () => {
   // BUG FIX #4: Rate limiter cleanup is now initialized with interval management
   // No need to initialize here as rateLimiter singleton already schedules cleanup
 
-  // Log available endpoints for other branches
-  if (config.isDebug || config.isTest) {
-    console.log('\n📝 Available Configuration Endpoints:');
-    console.log(`   GET /api/health - Server health check`);
-    console.log(`   GET /api/config - Application configuration`);
-    console.log(`   GET /api/db-health - Database connection status`);
-    console.log(`   GET /api/app-state - Complete app state with modes`);
-    console.log(`   GET /api/connection-status - Connection pool statistics\n`);
-  }
+
+
+  // Log CORS Configuration
+  console.log('\n🌐 CORS Configuration:');
+  console.log('   ✓ Allow Origins: * (All origins)');
+  console.log('   ✓ Methods: GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  console.log('   ✓ Headers: Content-Type, Authorization, X-Requested-With, X-App-Mode, X-Output-Type');
+  console.log('   ✓ Referrer Policy: no-referrer');
+  console.log('   ✓ Credentials: false');
+  console.log('   📊 Check CORS: GET http://localhost:' + PORT + '/api/cors-check\n');
 
   // Log database connection status
   console.log('\n🔌 Database Connection Status:');
@@ -230,6 +245,10 @@ app.listen(PORT, () => {
   console.log('   ✓ Idle Timeout: 15 minutes');
   console.log('   ✓ Auto-Recovery: ENABLED\n');
 });
+
+// Terminal Commands Listener (interactive CLI)
+const startTerminalCommands = require('./src/utils/terminalCommands');
+startTerminalCommands(app, databaseConfig);
 
 // Graceful Shutdown Handler
 process.on('SIGTERM', async () => {

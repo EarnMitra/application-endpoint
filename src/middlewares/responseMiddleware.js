@@ -44,8 +44,7 @@ const responseMiddleware = (req, res, next) => {
       message,
       data,
       ...(Object.keys(meta).length > 0 && { meta }),
-      timestamp: getTimestamp(),
-      ...(req.appMode !== 'production' && { mode: req.appMode })
+      timestamp: getTimestamp()
     });
   };
 
@@ -70,8 +69,7 @@ const responseMiddleware = (req, res, next) => {
         endIndex: Math.min(page * pageSize, total)
       },
       ...(Object.keys(filters).length > 0 && { filters }),
-      timestamp: getTimestamp(),
-      ...(req.appMode !== 'production' && { mode: req.appMode })
+      timestamp: getTimestamp()
     });
   };
 
@@ -86,8 +84,7 @@ const responseMiddleware = (req, res, next) => {
         sorting: sortInfo,
         resultCount: Array.isArray(data) ? data.length : 1
       },
-      timestamp: getTimestamp(),
-      ...(req.appMode !== 'production' && { mode: req.appMode })
+      timestamp: getTimestamp()
     });
   };
 
@@ -100,8 +97,7 @@ const responseMiddleware = (req, res, next) => {
       count: Array.isArray(items) ? items.length : 0,
       ...(total !== null && { total }),
       ...(Object.keys(metadata).length > 0 && { metadata }),
-      timestamp: getTimestamp(),
-      ...(req.appMode !== 'production' && { mode: req.appMode })
+      timestamp: getTimestamp()
     };
     return res.status(statusCode).json(response);
   };
@@ -112,8 +108,7 @@ const responseMiddleware = (req, res, next) => {
       statusCode,
       message,
       timestamp: getTimestamp(),
-      ...(errorCode && { errorCode }),
-      ...(req.appMode !== 'production' && { mode: req.appMode })
+      ...(errorCode && { errorCode })
     };
     if (errors) {
       response.errors = errors;
@@ -127,8 +122,7 @@ const responseMiddleware = (req, res, next) => {
       statusCode: 422,
       message,
       errors: validationErrors,
-      timestamp: getTimestamp(),
-      ...(req.appMode !== 'production' && { mode: req.appMode })
+      timestamp: getTimestamp()
     });
   };
 
@@ -139,8 +133,7 @@ const responseMiddleware = (req, res, next) => {
       message,
       data,
       timestamp: getTimestamp(),
-      ...(resourceId && { resourceId }),
-      ...(req.appMode !== 'production' && { mode: req.appMode })
+      ...(resourceId && { resourceId })
     };
     return res.status(201).json(response);
   };
@@ -151,8 +144,7 @@ const responseMiddleware = (req, res, next) => {
       statusCode: 200,
       message,
       data,
-      timestamp: getTimestamp(),
-      ...(req.appMode !== 'production' && { mode: req.appMode })
+      timestamp: getTimestamp()
     });
   };
 
@@ -162,8 +154,7 @@ const responseMiddleware = (req, res, next) => {
       statusCode: 200,
       message,
       timestamp: getTimestamp(),
-      ...(deletedData && { data: deletedData }),
-      ...(req.appMode !== 'production' && { mode: req.appMode })
+      ...(deletedData && { data: deletedData })
     };
     return res.status(200).json(response);
   };
@@ -179,8 +170,7 @@ const responseMiddleware = (req, res, next) => {
         totalResults: total
       },
       data: results,
-      timestamp: getTimestamp(),
-      ...(req.appMode !== 'production' && { mode: req.appMode })
+      timestamp: getTimestamp()
     });
   };
 
@@ -198,8 +188,7 @@ const responseMiddleware = (req, res, next) => {
         successful,
         ...(failed.length > 0 && { failed })
       },
-      timestamp: getTimestamp(),
-      ...(req.appMode !== 'production' && { mode: req.appMode })
+      timestamp: getTimestamp()
     });
   };
 
@@ -209,8 +198,7 @@ const responseMiddleware = (req, res, next) => {
       statusCode: 404,
       message,
       ...(resource && { resource }),
-      timestamp: getTimestamp(),
-      ...(req.appMode !== 'production' && { mode: req.appMode })
+      timestamp: getTimestamp()
     });
   };
 
@@ -220,8 +208,7 @@ const responseMiddleware = (req, res, next) => {
       statusCode: 401,
       message,
       errorCode: 'UNAUTHORIZED',
-      timestamp: getTimestamp(),
-      ...(req.appMode !== 'production' && { mode: req.appMode })
+      timestamp: getTimestamp()
     });
   };
 
@@ -231,8 +218,7 @@ const responseMiddleware = (req, res, next) => {
       statusCode: 403,
       message,
       errorCode: 'FORBIDDEN',
-      timestamp: getTimestamp(),
-      ...(req.appMode !== 'production' && { mode: req.appMode })
+      timestamp: getTimestamp()
     });
   };
 
@@ -242,8 +228,7 @@ const responseMiddleware = (req, res, next) => {
       statusCode: 500,
       message,
       errorCode: 'INTERNAL_SERVER_ERROR',
-      timestamp: getTimestamp(),
-      ...(req.appMode !== 'production' && { mode: req.appMode })
+      timestamp: getTimestamp()
     };
     if (errorDetails && req.appMode !== 'production') {
       response.details = errorDetails;
@@ -259,16 +244,14 @@ const responseMiddleware = (req, res, next) => {
       message: 'Too many requests',
       errorCode: 'RATE_LIMIT_EXCEEDED',
       retryAfter,
-      timestamp: getTimestamp(),
-      ...(req.appMode !== 'production' && { mode: req.appMode })
+      timestamp: getTimestamp()
     });
   };
 
   res.custom = (statusCode, responseBody) => {
     return res.status(statusCode).json({
       ...responseBody,
-      timestamp: getTimestamp(),
-      ...(req.appMode !== 'production' && { mode: req.appMode })
+      timestamp: getTimestamp()
     });
   };
 

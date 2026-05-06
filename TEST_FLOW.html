@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EarnMitra Automated Flow Tester</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background: #09090b; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #18181b; }
+        ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 99px; }
+        .request-log { background: #0d0d0f; border: 1px solid #27272a; border-radius: 8px; padding: 12px; margin: 8px 0; }
+        .request-log.success { border-left: 4px solid #34d399; }
+        .request-log.error { border-left: 4px solid #f87171; }
+        .request-log.pending { border-left: 4px solid #fbbf24; }
+        .step-item { background: #18181b; border: 1px solid #27272a; border-radius: 8px; padding: 16px; margin: 12px 0; transition: all 0.3s; }
+        .step-item.active { border-color: #6366f1; background: #1e1b4b; }
+        .step-item.completed { border-left: 4px solid #34d399; }
+        .step-item.failed { border-left: 4px solid #f87171; }
+        .otp-input { background: #0d0d0f; border: 2px solid #27272a; border-radius: 8px; padding: 8px 12px; color: #e4e4e7; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 8px; }
+        .otp-input:focus { border-color: #6366f1; outline: none; }
+        .response-box { background: #0d0d0f; border: 1px solid #27272a; border-radius: 8px; padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 11px; max-height: 400px; overflow-y: auto; color: #a1a1aa; white-space: pre-wrap; word-break: break-all; }
+        .detail-section { margin-top: 12px; border-top: 1px solid #27272a; padding-top: 12px; }
+        .detail-section-title { font-weight: bold; color: #818cf8; margin-bottom: 6px; font-size: 12px; }
+        .detail-box { background: #0d0d0f; border: 1px solid #27272a; border-radius: 6px; padding: 8px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #a1a1aa; white-space: pre-wrap; word-break: break-all; max-height: 250px; overflow-y: auto; }
+        .header-row { display: grid; grid-template-columns: 120px 1fr; gap: 8px; padding: 4px 0; border-bottom: 1px solid #27272a; }
+        .header-key { color: #818cf8; font-weight: bold; }
+        .header-value { color: #86efac; }
+        .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+        .badge-get { background: #1d4ed8; color: #bfdbfe; }
+        .badge-post { background: #166534; color: #bbf7d0; }
+        .badge-success { background: #065f46; color: #a7f3d0; }
+        .badge-error { background: #7c2d12; color: #fbcfe8; }
+        .badge-pending { background: #78350f; color: #fef3c7; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body class="text-gray-200">
+    <div class="min-h-screen bg-gradient-to-b from-gray-950 to-gray-900 p-6">
+        <div class="max-w-6xl mx-auto">
+            <!-- Header -->
+            <div class="mb-8">
+                <h1 class="text-4xl font-bold text-white mb-2">🚀 EarnMitra Flow Tester</h1>
+                <p class="text-gray-400">Automated end-to-end testing from registration to user details</p>
+            </div>
+
+            <!-- Configuration -->
+            <div class="bg-gray-900 border border-gray-800 rounded-lg p-6 mb-6">
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Base URL</label>
+                        <input type="text" id="baseUrl" value="http://127.0.0.1:5000" class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-gray-100">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Phone Number</label>
+                        <input type="text" id="phoneNumber" value="9876543210" class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-gray-100">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Email</label>
+                        <input type="email" id="email" value="testuser@example.com" class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-gray-100">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">First Name</label>
+                        <input type="text" id="firstName" value="John" class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-gray-100">
+                    </div>
+                </div>
+                <button onclick="startFlow()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg transition-colors">
+                    ▶ Start Full Flow
+                </button>
+            </div>
+
+            <!-- Session Info -->
+            <div id="sessionInfo" class="bg-gray-900 border border-gray-800 rounded-lg p-4 mb-6 hidden">
+                <div class="grid grid-cols-3 gap-4">
+                    <div>
+                        <span class="text-gray-400 text-sm">Session Token</span>
+                        <div id="tokenDisplay" class="text-indigo-400 font-mono text-xs break-all">—</div>
+                    </div>
+                    <div>
+                        <span class="text-gray-400 text-sm">User ID</span>
+                        <div id="userIdDisplay" class="text-green-400 font-mono text-xs">—</div>
+                    </div>
+                    <div>
+                        <span class="text-gray-400 text-sm">Status</span>
+                        <div id="statusDisplay" class="text-blue-400 font-mono text-xs">—</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Execution Steps -->
+            <div id="stepsContainer" class="space-y-4">
+                <!-- Steps will be populated here -->
+            </div>
+
+            <!-- OTP Modal -->
+            <div id="otpModal" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50">
+                <div class="bg-gray-900 border border-gray-700 rounded-lg p-8 max-w-md w-full">
+                    <h2 class="text-2xl font-bold text-white mb-4">Enter OTP</h2>
+                    <p id="otpLabel" class="text-gray-400 mb-6">Enter the OTP for verification</p>
+                    <input type="text" id="otpInput" class="otp-input w-full mb-6" placeholder="000000" maxlength="6">
+                    <div class="flex gap-3">
+                        <button onclick="submitOTP()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded transition-colors">
+                            Submit
+                        </button>
+                        <button onclick="cancelFlow()" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded transition-colors">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        console.log('%c✅ TEST_FLOW.html Script Loaded', 'color: #34d399; font-size: 14px; font-weight: bold;');
+        
+        // ─────────────────────────────────────────
+        // UTILITY FUNCTIONS FOR AUTO-GENERATION
+        // ─────────────────────────────────────────
+        
+        function generateRandomPhone() {
+            // Generate 10-digit phone number
+            const digits = Math.floor(Math.random() * 9000000000) + 1000000000;
+            return digits.toString();
+        }
+
+        function generateRandomEmail() {
+            // Generate random email
+            const timestamp = Date.now();
+            const random = Math.floor(Math.random() * 10000);
+            return `testuser${timestamp}${random}@example.com`;
+        }
+
+        function generateRandomFirstName() {
+            // List of random first names
+            const names = ['Alex', 'Sam', 'Jordan', 'Casey', 'Morgan', 'Taylor', 'Riley', 'Avery', 'Quinn', 'Jamie'];
+            return names[Math.floor(Math.random() * names.length)];
+        }
+
+        // Global state
+        let flowState = {
+            baseUrl: 'http://127.0.0.1:5000',
+            phone: generateRandomPhone(),
+            email: generateRandomEmail(),
+            firstName: generateRandomFirstName(),
+            sessionToken: null,
+            refreshToken: null,
+            userId: null,
+            registrationStep: 0,
+            phoneOtpToken: null,
+            emailOtpToken: null,
+            currentOtpType: null,
+            running: false,
+            otpValue: null
+        };
+
+        // Step definitions
+        const steps = [
+            {
+                id: 'phone-initiate',
+                name: '📱 Step 1: Initiate Phone OTP',
+                method: 'POST',
+                endpoint: '/api/auth/phone/initiate',
+                getData: () => ({ phone: flowState.phone }),
+                onSuccess: (data) => {
+                    flowState.phoneOtpToken = data.token;
+                    return true;
+                },
+                requiresOTP: null,
+                otpLabel: null
+            },
+            {
+                id: 'phone-verify',
+                name: '✓ Step 2: Verify Phone OTP',
+                method: 'POST',
+                endpoint: '/api/auth/phone/verify',
+                getData: () => ({ token: flowState.phoneOtpToken, otp: flowState.otpValue, phone: flowState.phone }),
+                onSuccess: (data) => {
+                    flowState.sessionToken = data.session_token;
+                    flowState.refreshToken = data.refresh_token;
+                    flowState.userId = data.uid;
+                    flowState.registrationStep = data.step;
+                    return true;
+                },
+                requiresOTP: 'phone',
+                otpLabel: 'Phone OTP (check server console/terminal)'
+            },
+            {
+                id: 'add-email',
+                name: '📧 Step 3: Add Email',
+                method: 'POST',
+                endpoint: '/api/auth/register/add-email',
+                getData: () => ({ email: flowState.email }),
+                onSuccess: (data) => {
+                    flowState.emailOtpToken = data.token;
+                    return true;
+                },
+                requiresOTP: null,
+                otpLabel: null
+            },
+            {
+                id: 'verify-email',
+                name: '✓ Step 4: Verify Email OTP',
+                method: 'POST',
+                endpoint: '/api/auth/register/verify-email',
+                getData: () => ({ token: flowState.emailOtpToken, otp: flowState.otpValue, email: flowState.email }),
+                onSuccess: (data) => {
+                    flowState.registrationStep = data.step;
+                    return true;
+                },
+                requiresOTP: 'email',
+                otpLabel: 'Email OTP (sent to your email)'
+            },
+            {
+                id: 'complete-profile',
+                name: '👤 Step 5: Complete Profile',
+                method: 'POST',
+                endpoint: '/api/auth/register/complete-profile',
+                getData: () => ({
+                    first_name: flowState.firstName,
+                    last_name: 'Tester',
+                    gender: 'male',
+                    date_of_birth: '1990-01-15'
+                }),
+                onSuccess: (data) => {
+                    flowState.registrationStep = data.step;
+                    return true;
+                },
+                requiresOTP: null,
+                otpLabel: null
+            },
+            {
+                id: 'registration-status',
+                name: '📊 Step 6: Check Registration Status',
+                method: 'GET',
+                endpoint: '/api/user/registration-status',
+                getData: () => ({}),
+                onSuccess: (data) => true,
+                requiresOTP: null,
+                otpLabel: null
+            },
+            {
+                id: 'user-details',
+                name: '👥 Step 7: Fetch All User Details',
+                method: 'GET',
+                endpoint: '/api/user/details',
+                getData: () => ({}),
+                onSuccess: (data) => true,
+                requiresOTP: null,
+                otpLabel: null
+            }
+        ];
+
+        // Initialize
+        window.addEventListener('load', () => {
+            document.getElementById('baseUrl').addEventListener('change', (e) => {
+                flowState.baseUrl = e.target.value;
+            });
+            document.getElementById('phoneNumber').addEventListener('change', (e) => {
+                flowState.phone = e.target.value;
+            });
+            document.getElementById('email').addEventListener('change', (e) => {
+                flowState.email = e.target.value;
+            });
+            document.getElementById('firstName').addEventListener('change', (e) => {
+                flowState.firstName = e.target.value;
+            });
+
+            // Initialize values
+            flowState.baseUrl = document.getElementById('baseUrl').value;
+            flowState.phone = document.getElementById('phoneNumber').value;
+            flowState.email = document.getElementById('email').value;
+            flowState.firstName = document.getElementById('firstName').value;
+        });
+
+        async function startFlow() {
+            console.log('%c🚀 START FLOW CLICKED', 'color: #34d399; font-size: 16px; font-weight: bold;');
+            
+            if (flowState.running) {
+                console.log('%c⚠️ Flow already running!', 'color: #f59e0b;');
+                return;
+            }
+
+            // Auto-generate new credentials for each run
+            flowState.phone = generateRandomPhone();
+            flowState.email = generateRandomEmail();
+            flowState.firstName = generateRandomFirstName();
+            
+            // Update input fields with auto-generated values
+            document.getElementById('phoneNumber').value = flowState.phone;
+            document.getElementById('email').value = flowState.email;
+            document.getElementById('firstName').value = flowState.firstName;
+            
+            console.log('%c✨ New credentials generated for this run', 'color: #a78bfa; font-weight: bold;');
+            console.log('Phone:', flowState.phone);
+            console.log('Email:', flowState.email);
+            console.log('First Name:', flowState.firstName);
+
+            flowState.running = true;
+            flowState.sessionToken = null;
+            flowState.refreshToken = null;
+            flowState.userId = null;
+            flowState.otpValue = null;
+
+            document.getElementById('stepsContainer').innerHTML = '';
+            document.getElementById('sessionInfo').classList.remove('hidden');
+
+            console.clear();
+            console.log('%c🚀 FLOW STARTED', 'color: #34d399; font-size: 16px; font-weight: bold;');
+            console.log('%cConfiguration:', 'color: #6366f1; font-weight: bold;');
+            console.log('Base URL:', flowState.baseUrl);
+            console.log('Phone:', flowState.phone);
+            console.log('Email:', flowState.email);
+            console.log('');
+
+            for (let i = 0; i < steps.length; i++) {
+                const step = steps[i];
+                console.log(`%c⏳ Step ${i + 1}/${steps.length}: ${step.name}`, 'color: #fbbf24; font-weight: bold;');
+                await executeStep(step);
+                if (!flowState.running) {
+                    console.log('%c❌ FLOW STOPPED', 'color: #f87171; font-size: 14px; font-weight: bold;');
+                    break;
+                }
+            }
+
+            flowState.running = false;
+            console.log('%c✅ FLOW COMPLETED', 'color: #34d399; font-size: 16px; font-weight: bold;');
+        }
+
+        async function executeStep(step) {
+            const stepElement = createStepElement(step);
+            document.getElementById('stepsContainer').appendChild(stepElement);
+            stepElement.scrollIntoView({ behavior: 'smooth' });
+
+            try {
+                updateStepElement(stepElement, 'pending', 'Preparing request...');
+
+                // If step requires OTP - ASK FIRST before sending
+                if (step.requiresOTP) {
+                    flowState.currentOtpType = step.requiresOTP;
+                    flowState.otpValue = null;
+                    
+                    updateStepElement(stepElement, 'pending', `⏳ Waiting for OTP input... (${step.otpLabel})`);
+                    
+                    document.getElementById('otpLabel').textContent = step.otpLabel;
+                    document.getElementById('otpInput').value = '';
+                    document.getElementById('otpModal').classList.remove('hidden');
+
+                    console.log(`%c📝 OTP Modal Shown for: ${step.requiresOTP.toUpperCase()}`, 'color: #f59e0b; font-weight: bold;');
+
+                    // Wait for OTP input
+                    await waitForOTP();
+
+                    if (!flowState.otpValue) {
+                        updateStepElement(stepElement, 'failed', '❌ OTP input cancelled');
+                        console.log('%c❌ OTP input cancelled by user', 'color: #f87171;');
+                        flowState.running = false;
+                        return;
+                    }
+
+                    document.getElementById('otpModal').classList.add('hidden');
+                    console.log(`%c✓ OTP Received: ${flowState.otpValue}`, 'color: #34d399; font-weight: bold;');
+                    updateStepElement(stepElement, 'pending', `✓ OTP received (${flowState.otpValue}). Sending request...`);
+                }
+
+                // Prepare request
+                const url = `${flowState.baseUrl}${step.endpoint}`;
+                const options = {
+                    method: step.method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                };
+
+                // Add bearer token if available (not for first two steps)
+                if (flowState.sessionToken && step.id !== 'phone-initiate' && step.id !== 'phone-verify') {
+                    options.headers['Authorization'] = `Bearer ${flowState.sessionToken}`;
+                    console.log(`%c🔑 Bearer token injected`, 'color: #818cf8;');
+                }
+
+                // Get request body
+                let requestParams = null;
+                if (step.method === 'POST') {
+                    requestParams = step.getData();
+                    options.body = JSON.stringify(requestParams);
+                }
+
+                // Execute request
+                updateStepElement(stepElement, 'pending', '⏳ Sending request...');
+                console.log(`%c📤 Sending ${step.method} ${url}`, 'color: #60a5fa;');
+                
+                const response = await fetch(url, options);
+                const data = await response.json();
+
+                // Extract response headers
+                const responseHeaders = {};
+                response.headers.forEach((value, key) => {
+                    responseHeaders[key] = value;
+                });
+
+                // Log request
+                logRequest(step, options, data, response.status, requestParams, responseHeaders);
+
+                // Check response
+                if (response.ok && data.status === 'success') {
+                    step.onSuccess(data.data);
+                    console.log(`%c✅ Step Success: ${data.message}`, 'color: #34d399; font-weight: bold;');
+                    updateStepElement(stepElement, 'completed', `✓ ${data.message}`, requestParams, options.headers, responseHeaders, data);
+                    updateSessionInfo();
+                } else {
+                    console.log(`%c❌ Step Failed: ${data.message}`, 'color: #f87171; font-weight: bold;');
+                    updateStepElement(stepElement, 'failed', `❌ ${data.message}`, requestParams, options.headers, responseHeaders, data);
+                    flowState.running = false;
+                }
+            } catch (error) {
+                console.error('%c💥 CRITICAL ERROR', 'color: #f87171; font-size: 14px; font-weight: bold;', error);
+                updateStepElement(stepElement, 'failed', `❌ ${error.message}`);
+                flowState.running = false;
+            }
+        }
+
+        function waitForOTP() {
+            return new Promise((resolve) => {
+                window.resolveOTP = resolve;
+            });
+        }
+
+        function submitOTP() {
+            const otp = document.getElementById('otpInput').value;
+            if (otp.length === 6 && /^\d+$/.test(otp)) {
+                flowState.otpValue = otp;
+                window.resolveOTP();
+            } else {
+                alert('Please enter a valid 6-digit OTP');
+            }
+        }
+
+        function cancelFlow() {
+            flowState.running = false;
+            document.getElementById('otpModal').classList.add('hidden');
+            window.resolveOTP();
+        }
+
+        function createStepElement(step) {
+            const div = document.createElement('div');
+            div.className = 'step-item active';
+            div.id = `step-${step.id}`;
+            const otpBadge = step.requiresOTP ? `<span style="background: #f59e0b; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold;">⚠ OTP REQUIRED: ${step.requiresOTP.toUpperCase()}</span>` : '';
+            div.innerHTML = `
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-3">
+                        <span class="badge badge-post">${step.method}</span>
+                        <h3 class="text-lg font-semibold text-white">${step.name}</h3>
+                        ${otpBadge}
+                    </div>
+                    <span class="text-gray-500 text-sm font-mono">${step.endpoint}</span>
+                </div>
+                <div class="space-y-2">
+                    <div id="status-${step.id}" class="text-gray-400">Initializing...</div>
+                    <div id="params-${step.id}" class="detail-section hidden">
+                        <div class="detail-section-title">📦 Request Parameters:</div>
+                        <div id="params-content-${step.id}" class="detail-box"></div>
+                    </div>
+                    <div id="req-headers-${step.id}" class="detail-section hidden">
+                        <div class="detail-section-title">📤 Request Headers:</div>
+                        <div id="req-headers-content-${step.id}" class="detail-box"></div>
+                    </div>
+                    <div id="res-headers-${step.id}" class="detail-section hidden">
+                        <div class="detail-section-title">📥 Response Headers:</div>
+                        <div id="res-headers-content-${step.id}" class="detail-box"></div>
+                    </div>
+                    <div id="response-${step.id}" class="detail-section hidden">
+                        <div class="detail-section-title">📊 Response Body:</div>
+                        <div id="response-content-${step.id}" class="response-box"></div>
+                    </div>
+                </div>
+            `;
+            return div;
+        }
+
+        function updateStepElement(element, status, message, requestParams = null, requestHeaders = null, responseHeaders = null, responseBody = null) {
+            element.className = `step-item ${status === 'completed' ? 'completed' : status === 'failed' ? 'failed' : 'active'}`;
+            const statusEl = element.querySelector('[id^="status-"]');
+            statusEl.innerHTML = `<span class="badge badge-${status}">${status.toUpperCase()}</span> ${message}`;
+
+            const stepId = element.id.replace('step-', '');
+
+            // Display request parameters
+            if (requestParams) {
+                const paramsEl = element.querySelector(`[id="params-${stepId}"]`);
+                const paramsContentEl = element.querySelector(`[id="params-content-${stepId}"]`);
+                paramsEl.classList.remove('hidden');
+                paramsContentEl.textContent = JSON.stringify(requestParams, null, 2);
+            }
+
+            // Display request headers
+            if (requestHeaders) {
+                const headersEl = element.querySelector(`[id="req-headers-${stepId}"]`);
+                const headersContentEl = element.querySelector(`[id="req-headers-content-${stepId}"]`);
+                headersEl.classList.remove('hidden');
+                let headersHTML = '';
+                for (const [key, value] of Object.entries(requestHeaders)) {
+                    headersHTML += `<div class="header-row"><span class="header-key">${key}:</span><span class="header-value">${value}</span></div>`;
+                }
+                headersContentEl.innerHTML = headersHTML;
+            }
+
+            // Display response headers
+            if (responseHeaders) {
+                const resHeadersEl = element.querySelector(`[id="res-headers-${stepId}"]`);
+                const resHeadersContentEl = element.querySelector(`[id="res-headers-content-${stepId}"]`);
+                resHeadersEl.classList.remove('hidden');
+                let resHeadersHTML = '';
+                for (const [key, value] of Object.entries(responseHeaders)) {
+                    resHeadersHTML += `<div class="header-row"><span class="header-key">${key}:</span><span class="header-value">${value}</span></div>`;
+                }
+                resHeadersContentEl.innerHTML = resHeadersHTML;
+            }
+
+            // Display response body
+            if (responseBody) {
+                const responseEl = element.querySelector(`[id="response-${stepId}"]`);
+                const responseContentEl = element.querySelector(`[id="response-content-${stepId}"]`);
+                responseEl.classList.remove('hidden');
+                responseContentEl.textContent = typeof responseBody === 'string' ? responseBody : JSON.stringify(responseBody, null, 2);
+            }
+        }
+
+        function updateSessionInfo() {
+            document.getElementById('tokenDisplay').textContent = flowState.sessionToken ? flowState.sessionToken.substring(0, 50) + '...' : '—';
+            document.getElementById('userIdDisplay').textContent = flowState.userId || '—';
+            document.getElementById('statusDisplay').textContent = `Step ${flowState.registrationStep}`;
+        }
+
+        function logRequest(step, options, response, statusCode) {
+            console.group(`📨 ${step.method} ${step.endpoint}`);
+            console.log('⏱ Method:', step.method);
+            console.log('📍 Endpoint:', step.endpoint);
+            console.log('🎯 Requires OTP:', step.requiresOTP);
+            console.log('📤 Request Headers:', options.headers);
+            if (options.body) {
+                console.log('📦 Request Body:', JSON.parse(options.body));
+            }
+            console.log('📊 Response Status:', statusCode);
+            console.log('📥 Response Data:', response);
+            console.groupEnd();
+        }
+    </script>
+</body>
+</html>

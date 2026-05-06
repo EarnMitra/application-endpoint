@@ -159,7 +159,7 @@
                 <!-- Base URL -->
                 <div class="flex items-center gap-2 bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-1.5">
                     <span class="text-xs text-zinc-500">base</span>
-                    <input type="text" id="baseUrl" value="http://localhost:5000" class="bg-transparent text-xs font-mono text-zinc-300 outline-none w-44 placeholder-zinc-600">
+                    <input type="text" id="baseUrl" value="" placeholder="http://127.0.0.1:5000" class="bg-transparent text-xs font-mono text-zinc-300 outline-none w-44 placeholder-zinc-600">
                 </div>
             </div>
         </div>
@@ -191,10 +191,10 @@
                         <optgroup label="Authentication · Status">
                             <option value="auth-status">📊 Status Check · GET /api/auth/status</option>
                         </optgroup>
-                        <optgroup label="Health & Config">
-                            <option value="health-check">💚 Health Check · GET /api/health</option>
-                            <option value="config">⚙️ Config · GET /api/config</option>
-                            <option value="db-health">🗄️ Database Health · GET /api/db-health</option>
+                        <optgroup label="User · Profile">
+                            <option value="user-details">👥 User Details · GET /api/user/details</option>
+                            <option value="registration-status">📊 Registration Status · GET /api/user/registration-status</option>
+                        </optgroup>
                         </optgroup>
                     </select>
 
@@ -218,6 +218,18 @@
                         <span id="fullUrlPreview" class="text-xs font-mono text-zinc-400 truncate flex-1">http://localhost:5000/api/auth/phone/initiate</span>
                         <button onclick="copyUrl()" class="text-zinc-600 hover:text-zinc-300 transition-colors text-xs ml-2" title="Copy URL">⎘</button>
                     </div>
+                </div>
+
+                <!-- Send + Clear Buttons (TOP) -->
+                <div class="flex gap-2">
+                    <button onclick="sendRequest()" id="sendBtn"
+                        class="flex-1 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 active:scale-[0.99] text-white font-semibold text-sm tracking-wide transition-all duration-150 shadow-lg shadow-brand-500/20 flex items-center justify-center gap-2">
+                        <span id="sendIcon">⚡</span>
+                        <span id="sendLabel">Send Request</span>
+                    </button>
+                    <button onclick="clearAll()" class="px-5 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-500 hover:text-zinc-300 text-xs font-medium transition-all border border-zinc-800">
+                        Clear
+                    </button>
                 </div>
 
                 <!-- Session/Cookie Info Banner -->
@@ -257,6 +269,8 @@
                                 </optgroup>
                                 <optgroup label="Other">
                                     <option value="status-check">Check Registration Status</option>
+                                    <option value="user-details-sample">Get User Details (Requires Token)</option>
+                                    <option value="registration-status-sample">Get Registration Status (Requires Token)</option>
                                 </optgroup>
                             </select>
                             <button onclick="formatBody()" class="text-xs text-zinc-500 hover:text-zinc-300 bg-zinc-800 px-2 py-1 rounded-md transition-colors">Format</button>
@@ -279,17 +293,6 @@
                         <input type="checkbox" id="prettyPrint" checked class="rounded"> Pretty Print
                     </label>
                 </div>
-
-                <!-- Send Button -->
-                <button onclick="sendRequest()" id="sendBtn"
-                    class="w-full py-3 rounded-xl bg-brand-500 hover:bg-brand-600 active:scale-[0.99] text-white font-semibold text-sm tracking-wide transition-all duration-150 shadow-lg shadow-brand-500/20 flex items-center justify-center gap-2">
-                    <span id="sendIcon">⚡</span>
-                    <span id="sendLabel">Send Request</span>
-                </button>
-
-                <button onclick="clearAll()" class="w-full py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-500 hover:text-zinc-300 text-xs font-medium transition-all border border-zinc-800">
-                    Clear All
-                </button>
 
                 <!-- Flow Reference -->
                 <div class="bg-zinc-900/40 border border-zinc-800 rounded-xl p-4">
@@ -441,6 +444,16 @@
                 path: '/api/auth/status?phone=9876543210', method: 'GET',
                 headers: '{"Content-Type": "application/json"}',
                 body: ''
+            },
+            'user-details-sample': {
+                path: '/api/user/details', method: 'GET',
+                headers: '{"Content-Type": "application/json", "Authorization": "Bearer <session_token>"}',
+                body: ''
+            },
+            'registration-status-sample': {
+                path: '/api/user/registration-status', method: 'GET',
+                headers: '{"Content-Type": "application/json", "Authorization": "Bearer <session_token>"}',
+                body: ''
             }
         };
 
@@ -451,15 +464,27 @@
             'register-verify-email': { path: '/api/auth/register/verify-email',      method: 'POST', template: 'verify-email' },
             'register-complete':     { path: '/api/auth/register/complete-profile',  method: 'POST', template: 'complete-profile' },
             'auth-status':           { path: '/api/auth/status?phone=9876543210',    method: 'GET',  template: 'status-check' },
-            'health-check':          { path: '/api/health',                          method: 'GET',  template: null },
-            'config':                { path: '/api/config',                          method: 'GET',  template: null },
-            'db-health':             { path: '/api/db-health',                       method: 'GET',  template: null },
+            'user-details':          { path: '/api/user/details',                    method: 'GET',  template: null },
+            'registration-status':   { path: '/api/user/registration-status',        method: 'GET',  template: null },
         };
 
         // ─────────────────────────────────────────
         // INIT
         // ─────────────────────────────────────────
         function init() {
+            // Auto-detect and suggest correct base URL for dev environments
+            const currentProtocol = window.location.protocol; // http: or https:
+            const currentHost = window.location.hostname; // localhost, 127.0.0.1, etc
+            
+            // If accessing from Live Server or similar dev server, suggest same IP:5000
+            let suggestedBaseUrl = `${currentProtocol}//127.0.0.1:5000`;
+            if (currentHost !== 'localhost' && currentHost !== '127.0.0.1') {
+                // Accessed from external IP, use that IP with port 5000
+                suggestedBaseUrl = `${currentProtocol}//${currentHost.split(':')[0]}:5000`;
+            }
+            
+            document.getElementById('baseUrl').value = suggestedBaseUrl;
+            
             updateMethodBadge();
             updateUrlPreview();
             refreshTokenStatus();
@@ -661,7 +686,8 @@
                 const options = {
                     method,
                     headers: finalHeaders,
-                    credentials: 'include', // send cookies automatically for same-origin
+                    // credentials: 'include' causes CORS errors with Access-Control-Allow-Origin: *
+                    // Instead, we manually inject Authorization & Cookie headers above
                 };
                 if (requestBody) options.body = JSON.stringify(requestBody);
 
@@ -819,7 +845,20 @@
             document.getElementById('statusText').textContent = 'Network Error';
             document.getElementById('statusIndicator').className = 'w-2.5 h-2.5 rounded-full bg-red-400';
             document.getElementById('panel-error').classList.remove('hidden');
-            document.getElementById('errorResponse').textContent = error.message || 'Unknown error occurred.\n\nMake sure your server is running and CORS is configured.';
+            
+            let errorMsg = error.message || 'Unknown error occurred';
+            
+            // Check for common CORS errors
+            if (errorMsg.includes('Failed to fetch') || !error.message) {
+                errorMsg = 'Failed to fetch - CORS error or server unreachable.\n\n' +
+                          'Please check:\n' +
+                          '1. Is the server running on port 5000?\n' +
+                          '2. Is the base URL correct? (Should be http://127.0.0.1:5000)\n' +
+                          '3. Check browser Console (F12) for more details\n\n' +
+                          'Error: ' + (error.message || 'Unknown');
+            }
+            
+            document.getElementById('errorResponse').textContent = errorMsg;
         }
 
         // ─────────────────────────────────────────
