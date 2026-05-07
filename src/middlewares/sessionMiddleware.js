@@ -146,7 +146,7 @@ const verifySessionOrDie = async (req, res) => {
       return null;
     }
 
-    if (status !== 'active') {
+    if (status !== 'active' && status !== 'pending') {
       res.error(
         { 
           field: 'user_status',

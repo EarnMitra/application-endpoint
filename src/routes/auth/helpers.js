@@ -197,10 +197,18 @@ const helpers = {
 
   /**
    * Validate phone number format - Indian phone numbers only (exactly 10 digits)
+   * Must start with 9, 8, 7, or 6
    */
   validatePhone: (phone) => {
     const phoneRegex = /^[0-9]{10}$/;
-    return phoneRegex.test(phone.replace(/\D/g, ''));
+    const cleanPhone = phone.replace(/\D/g, '');
+    const isValidFormat = phoneRegex.test(cleanPhone);
+    
+    // Check if phone starts with 9, 8, 7, or 6
+    const validFirstDigits = ['9', '8', '7', '6'];
+    const startsWithValidDigit = validFirstDigits.includes(cleanPhone.charAt(0));
+    
+    return isValidFormat && startsWithValidDigit;
   },
 
   /**
