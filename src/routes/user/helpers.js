@@ -4,26 +4,6 @@
  */
 
 /**
- * Validate session token and return user ID
- */
-const validateSessionToken = async (db, token) => {
-  try {
-    const result = await db.query(
-      `SELECT uid FROM sessions 
-       WHERE session_token = $1 
-       AND status = 'active' 
-       AND expires_at > CURRENT_TIMESTAMP`,
-      [token]
-    );
-
-    return result.rows.length > 0 ? result.rows[0].uid : null;
-  } catch (error) {
-    console.error('[VALIDATE_SESSION_TOKEN_ERROR]', error.message);
-    throw error;
-  }
-};
-
-/**
  * Get registration status and check if user is stuck
  */
 const getRegistrationStatus = (user) => {
@@ -271,7 +251,6 @@ const fetchVerificationHistory = async (db, userId) => {
 };
 
 module.exports = {
-  validateSessionToken,
   getRegistrationStatus,
   fetchUserProfile,
   fetchWalletInfo,

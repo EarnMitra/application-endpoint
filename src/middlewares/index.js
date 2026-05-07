@@ -6,6 +6,8 @@ const {
   databaseLoggingMiddleware,
   databaseHealthMiddleware
 } = require('./databaseMiddleware');
+const otpMiddleware = require('./otpMiddleware');
+const sessionMiddleware = require('./sessionMiddleware');
 
 module.exports = {
   modeMiddleware,
@@ -13,5 +15,7 @@ module.exports = {
   databaseMiddleware,
   asyncDatabaseHandler,
   databaseLoggingMiddleware,
-  databaseHealthMiddleware
+  databaseHealthMiddleware,
+  otpMiddleware,
+  sessionMiddleware
 };

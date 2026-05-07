@@ -28,14 +28,9 @@ router.get('/registration-status', async (req, res) => {
 
     const sessionToken = authHeader.substring(7);
 
-    const userId = await helpers.validateSessionToken(req.db, sessionToken);
-    if (!userId) {
-      return res.error(
-        { field: 'Authorization' },
-        'Invalid or expired session token',
-        401
-      );
-    }
+    // Verify session token at beginning of route - dies here if invalid
+    const userId = await req.sessionMiddleware.verifySessionOrDie(req, res);
+    if (!userId) return; // Error response already sent
 
     const userResult = await req.db.query(
       `SELECT registration_step, status, email_verified, phone_verified 

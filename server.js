@@ -4,16 +4,28 @@ const cors = require('cors');
 
 const appConfig = require('./src/config/appConfig');
 const databaseConfig = require('./src/config/databaseConfig');
-const { 
-  modeMiddleware, 
-  responseMiddleware, 
-  databaseMiddleware,
-  databaseLoggingMiddleware,
-  databaseHealthMiddleware
-} = require('./src/middlewares');
+const middlewares = require('./src/middlewares');
 const authRoutes = require('./src/routes/auth');
 const userRoutes = require('./src/routes/user');
 const rateLimiter = require('./src/routes/auth/rateLimiter'); // BUG FIX #4: Import for shutdown
+
+// Auto-discover middleware conditions based on naming conventions
+const getMiddlewareCondition = (middlewareName) => {
+  // Logging middleware only in development
+  if (middlewareName.includes('Logging')) {
+    return process.env.NODE_ENV !== 'live' && process.env.NODE_ENV !== 'prod' && process.env.NODE_ENV !== 'production';
+  }
+  // All others run by default
+  return true;
+};
+
+// Automatically build middleware config from exported middlewares
+const middlewareConfig = Object.keys(middlewares)
+  .filter(key => typeof middlewares[key] === 'function' && key.endsWith('Middleware'))
+  .map(name => ({
+    name,
+    condition: getMiddlewareCondition(name)
+  }));
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -28,12 +40,12 @@ try {
   // BUG FIX #14: Test connection on startup to ensure database is accessible
   databaseConfig.testConnection().then((isConnected) => {
     if (isConnected) {
-      console.log('✓ Database connection test passed');
+      console.log('[DATABASE] Connection test passed');
     } else {
-      console.warn('⚠ Database connection test failed - will retry on first request');
+      console.warn('[DATABASE] Connection test failed - will retry on first request');
     }
   }).catch((error) => {
-    console.warn('⚠ Database connection test error:', error.message);
+    console.warn('[DATABASE] Connection test error:', error.message);
   });
 } catch (error) {
   console.error('Failed to initialize database:', error);
@@ -73,22 +85,17 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
-// Application Mode Middleware (must be first to set req.appMode)
-app.use(modeMiddleware);
-
-// Response Structure Middleware
-app.use(responseMiddleware);
-
-// Database Middleware (attaches db to req)
-app.use(databaseMiddleware);
-
-// Database Logging Middleware (only in development, not in live/prod)
-if (process.env.NODE_ENV !== 'live' && process.env.NODE_ENV !== 'prod' && process.env.NODE_ENV !== 'production') {
-  app.use(databaseLoggingMiddleware);
-}
-
-// Database Health Middleware
-app.use(databaseHealthMiddleware);
+// Dynamically apply all registered middlewares
+middlewareConfig.forEach(({ name, condition }) => {
+  if (condition && middlewares[name]) {
+    app.use(middlewares[name]);
+    if (process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'development') {
+      console.log(`[MIDDLEWARE] ${name} loaded successfully`);
+    }
+  } else if (!middlewares[name]) {
+    console.warn(`[MIDDLEWARE] Warning: "${name}" not found in src/middlewares`);
+  }
+});
 
 // Auth Routes
 app.use('/api/auth', authRoutes);
@@ -187,7 +194,7 @@ app.use((err, req, res, next) => {
   
   // Handle database connection errors gracefully
   if (err.code === 'ECONNRESET' || err.code === 'ECONNREFUSED') {
-    console.error('⚠️ Database connection error - attempting to recover...');
+    console.error('[ERROR] Database connection error - attempting to recover...');
     return res.status(503).json({
       success: false,
       message: 'Database connection temporarily unavailable. The server will auto-recover.',
@@ -230,20 +237,21 @@ app.listen(PORT, () => {
 
 
   // Log CORS Configuration
-  console.log('\n🌐 CORS Configuration:');
-  console.log('   ✓ Allow Origins: * (All origins)');
-  console.log('   ✓ Methods: GET, POST, PUT, DELETE, PATCH, OPTIONS');
-  console.log('   ✓ Headers: Content-Type, Authorization, X-Requested-With, X-App-Mode, X-Output-Type');
-  console.log('   ✓ Referrer Policy: no-referrer');
-  console.log('   ✓ Credentials: false');
-  console.log('   📊 Check CORS: GET http://localhost:' + PORT + '/api/cors-check\n');
+  console.log('\n[CORS] Configuration enabled:');
+  console.log('[CORS] Allow Origins: * (All origins)');
+  console.log('[CORS] Methods: GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  console.log('[CORS] Headers: Content-Type, Authorization, X-Requested-With, X-App-Mode, X-Output-Type');
+  console.log('[CORS] Referrer Policy: no-referrer');
+  console.log('[CORS] Credentials: false');
+  console.log('[CORS] Diagnostic: GET http://localhost:' + PORT + '/api/cors-check');
 
   // Log database connection status
-  console.log('\n🔌 Database Connection Status:');
-  console.log('   ✓ Keep-Alive: ENABLED (every 30 seconds)');
-  console.log('   ✓ Health Check: ENABLED (every 5 minutes)');
-  console.log('   ✓ Idle Timeout: 15 minutes');
-  console.log('   ✓ Auto-Recovery: ENABLED\n');
+  console.log('\n[DATABASE] Connection pool status:');
+  console.log('[DATABASE] Keep-Alive: ENABLED (30 second interval)');
+  console.log('[DATABASE] Health Check: ENABLED (5 minute interval)');
+  console.log('[DATABASE] Idle Timeout: 15 minutes');
+  console.log('[DATABASE] Auto-Recovery: ENABLED');
+  console.log('[SERVER] Ready to accept requests\n');
 });
 
 // Terminal Commands Listener (interactive CLI)
@@ -252,16 +260,16 @@ startTerminalCommands(app, databaseConfig);
 
 // Graceful Shutdown Handler
 process.on('SIGTERM', async () => {
-  console.log('\n⏹️ SIGTERM signal received: closing HTTP server');
+  console.log('\n[SHUTDOWN] SIGTERM signal received - closing server');
   
   try {
     // BUG FIX #4: Stop rate limiter cleanup interval
     rateLimiter.stopCleanupInterval();
-    console.log('✓ Rate limiter cleanup stopped');
+    console.log('[SHUTDOWN] Rate limiter cleanup stopped');
     
     // Close database connection pool
     await databaseConfig.close();
-    console.log('✓ Database connection pool closed');
+    console.log('[SHUTDOWN] Database connection pool closed');
   } catch (error) {
     console.error('Error during shutdown:', error);
   }
@@ -270,16 +278,16 @@ process.on('SIGTERM', async () => {
 });
 
 process.on('SIGINT', async () => {
-  console.log('\n⏹️ SIGINT signal received: closing HTTP server');
+  console.log('\n[SHUTDOWN] SIGINT signal received - closing server');
   
   try {
     // BUG FIX #4: Stop rate limiter cleanup interval
     rateLimiter.stopCleanupInterval();
-    console.log('✓ Rate limiter cleanup stopped');
+    console.log('[SHUTDOWN] Rate limiter cleanup stopped');
     
     // Close database connection pool
     await databaseConfig.close();
-    console.log('✓ Database connection pool closed');
+    console.log('[SHUTDOWN] Database connection pool closed');
   } catch (error) {
     console.error('Error during shutdown:', error);
   }
@@ -289,7 +297,7 @@ process.on('SIGINT', async () => {
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
-  console.error('❌ Uncaught Exception:', error);
+  console.error('[ERROR] Uncaught Exception:', error.message);
   process.exit(1);
 });
 

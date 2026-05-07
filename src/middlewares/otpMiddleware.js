@@ -292,9 +292,26 @@ const markOTPAsVerified = async (token, client) => {
   }
 };
 
-module.exports = {
-  generateEmailOTP,
-  generatePhoneOTP,
-  verifyOTP,
-  markOTPAsVerified
+/**
+ * OTP Middleware
+ * Attaches all OTP utilities to request object
+ * This makes them accessible in routes via req.otpMiddleware
+ */
+const otpMiddleware = (req, res, next) => {
+  // Attach all OTP functions to request object
+  req.otpMiddleware = {
+    generateEmailOTP,
+    generatePhoneOTP,
+    verifyOTP,
+    markOTPAsVerified
+  };
+  
+  next();
 };
+
+// Export as both named exports (for direct use) and default middleware
+module.exports = otpMiddleware;
+module.exports.generateEmailOTP = generateEmailOTP;
+module.exports.generatePhoneOTP = generatePhoneOTP;
+module.exports.verifyOTP = verifyOTP;
+module.exports.markOTPAsVerified = markOTPAsVerified;

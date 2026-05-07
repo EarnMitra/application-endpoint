@@ -11,7 +11,6 @@ const express = require('express');
 const router = express.Router();
 const helpers = require('./helpers');
 const rateLimiter = require('./rateLimiter');
-const otpMiddleware = require('../../middlewares/otpMiddleware');
 
 /**
  * STEP 1: Add Email and Send OTP
@@ -43,8 +42,6 @@ router.post('/add-email', async (req, res) => {
       );
     }
 
-    const sessionToken = authHeader.substring(7); // Remove "Bearer "
-
     // BUG FIX #27: Normalize email FIRST before any validation (trim + lowercase)
     normalizedEmail = email.trim().toLowerCase();
 
@@ -56,16 +53,9 @@ router.post('/add-email', async (req, res) => {
       );
     }
 
-    // BUG FIX #19 & C7: Validate session token FIRST before checking rate limit
-    // This way invalid sessions don't waste a rate limit attempt, and uses normalized email
-    const userId = await helpers.validateSessionToken(req.db, sessionToken);
-    if (!userId) {
-      return res.error(
-        { field: 'Authorization' },
-        'Invalid or expired session token',
-        401
-      );
-    }
+    // Verify session token at beginning of route - dies here if invalid
+    const userId = await req.sessionMiddleware.verifySessionOrDie(req, res);
+    if (!userId) return; // Error response already sent
 
     // BUG FIX #27: Use normalized email for rate limiting (prevent bypass via case variation)
     const rateLimitCheck = rateLimiter.isAllowed(normalizedEmail, 'add-email', 5, 3600000);
@@ -131,7 +121,7 @@ router.post('/add-email', async (req, res) => {
     }
 
     // BUG FIX #21: Generate OTP BEFORE transaction, send response AFTER
-    const { token: otpToken, expiresIn } = await otpMiddleware.generateEmailOTP(normalizedEmail, req);
+    const { token: otpToken, expiresIn } = await req.otpMiddleware.generateEmailOTP(normalizedEmail, req);
 
     // BUG FIX #4: Wrap ONLY database operations in transaction to prevent race condition
     await req.db.transaction(async (client) => {
@@ -247,15 +237,9 @@ router.post('/verify-email', async (req, res) => {
       );
     }
 
-    // Validate session token and get user ID
-    const userId = await helpers.validateSessionToken(req.db, sessionToken);
-    if (!userId) {
-      return res.error(
-        { field: 'Authorization' },
-        'Invalid or expired session token',
-        401
-      );
-    }
+    // Verify session token at beginning of route - dies here if invalid
+    const userId = await req.sessionMiddleware.verifySessionOrDie(req, res);
+    if (!userId) return; // Error response already sent
 
     // Check if registration already complete
     const userStatusCheck = await req.db.query(
@@ -281,7 +265,7 @@ router.post('/verify-email', async (req, res) => {
     }
 
     // Verify email OTP using centralized OTP middleware (use normalized email)
-    const verificationResult = await otpMiddleware.verifyOTP(token, otp, normalizedEmail, 'email', req.db);
+    const verificationResult = await req.otpMiddleware.verifyOTP(token, otp, normalizedEmail, 'email', req.db);
 
     if (!verificationResult.valid) {
       // Map error codes to HTTP status codes
@@ -307,7 +291,7 @@ router.post('/verify-email', async (req, res) => {
       );
 
       // Mark token as verified
-      await otpMiddleware.markOTPAsVerified(token, client);
+      await req.otpMiddleware.markOTPAsVerified(token, client);
     });
 
     res.success(
@@ -387,15 +371,9 @@ router.post('/complete-profile', async (req, res) => {
 
     const sessionToken = authHeader.substring(7); // Remove "Bearer "
 
-    // Validate session token and get user ID
-    userId = await helpers.validateSessionToken(req.db, sessionToken);
-    if (!userId) {
-      return res.error(
-        { field: 'Authorization' },
-        'Invalid or expired session token',
-        401
-      );
-    }
+    // Verify session token at beginning of route - dies here if invalid
+    const userId = await req.sessionMiddleware.verifySessionOrDie(req, res);
+    if (!userId) return; // Error response already sent
 
     // BUG FIX #16: Normalize optional fields - convert empty strings to null
     const normalizedFirstName = first_name.trim() || null; // BUG FIX #28: Trim first_name

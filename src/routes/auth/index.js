@@ -11,6 +11,7 @@ const router = express.Router();
 const phoneRoutes = require('./phone');
 const registrationRoutes = require('./registration');
 const statusRoutes = require('./status');
+const refreshRoutes = require('./refresh');
 
 // Documentation
 /**
@@ -32,6 +33,9 @@ const statusRoutes = require('./status');
  * 
  * Status Check:
  * - GET /api/auth/status?phone=9876543210 - Check registration progress
+ * 
+ * Token Refresh:
+ * - POST /api/auth/refresh-token - Refresh session token using refresh token
  */
 
 // Phone OTP routes - handles both registration and login
@@ -39,6 +43,9 @@ router.use('/phone', phoneRoutes);
 
 // Registration routes - all endpoints under /register (after phone verification)
 router.use('/register', registrationRoutes);
+
+// Token refresh routes
+router.use('/', refreshRoutes);
 
 // Status routes
 router.use('/', statusRoutes);

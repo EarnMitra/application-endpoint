@@ -8,7 +8,6 @@ const express = require('express');
 const router = express.Router();
 const helpers = require('./helpers');
 const rateLimiter = require('./rateLimiter');
-const otpMiddleware = require('../../middlewares/otpMiddleware');
 
 /**
  * Initiate Phone OTP
@@ -65,7 +64,7 @@ router.post('/initiate', async (req, res) => {
     const purpose = userExists.rows.length > 0 ? 'login' : 'registration';
 
     // Generate OTP using centralized OTP middleware
-    const { token, expiresIn } = await otpMiddleware.generatePhoneOTP(cleanPhone, req);
+    const { token, expiresIn } = await req.otpMiddleware.generatePhoneOTP(cleanPhone, req);
 
     // Build response without debug OTP (OTP only logged to terminal)
     const successResponse = {
@@ -168,7 +167,7 @@ router.post('/verify', async (req, res) => {
     }
 
     // Verify OTP using centralized OTP middleware
-    const verificationResult = await otpMiddleware.verifyOTP(token, otp, cleanPhone, 'mobile', req.db);
+    const verificationResult = await req.otpMiddleware.verifyOTP(token, otp, cleanPhone, 'mobile', req.db);
 
     if (!verificationResult.valid) {
       // Map error codes to HTTP status codes
@@ -297,7 +296,7 @@ router.post('/verify', async (req, res) => {
         }
 
         // Create session for immediate login
-        const { sessionToken: regSessionToken, refreshToken: regRefreshToken } = await helpers.createUserSession(client, userId, deviceInfo);
+        const { sessionToken: regSessionToken, refreshToken: regRefreshToken } = await req.sessionMiddleware.createUserSession(client, userId, deviceInfo);
         sessionToken = regSessionToken;
         refreshToken = regRefreshToken;
       });
@@ -356,7 +355,7 @@ router.post('/verify', async (req, res) => {
         }
 
         // Create session for login
-        const { sessionToken: loginSessionToken, refreshToken: loginRefreshToken } = await helpers.createUserSession(client, userId, deviceInfo);
+        const { sessionToken: loginSessionToken, refreshToken: loginRefreshToken } = await req.sessionMiddleware.createUserSession(client, userId, deviceInfo);
         sessionToken = loginSessionToken;
         refreshToken = loginRefreshToken;
       });

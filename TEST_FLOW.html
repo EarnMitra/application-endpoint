@@ -72,7 +72,7 @@
 
             <!-- Session Info -->
             <div id="sessionInfo" class="bg-gray-900 border border-gray-800 rounded-lg p-4 mb-6 hidden">
-                <div class="grid grid-cols-3 gap-4">
+                <div class="grid grid-cols-3 gap-4 mb-4">
                     <div>
                         <span class="text-gray-400 text-sm">Session Token</span>
                         <div id="tokenDisplay" class="text-indigo-400 font-mono text-xs break-all">—</div>
@@ -85,6 +85,14 @@
                         <span class="text-gray-400 text-sm">Status</span>
                         <div id="statusDisplay" class="text-blue-400 font-mono text-xs">—</div>
                     </div>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="refreshSessionToken()" class="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 rounded transition-colors">
+                        🔄 Refresh Token
+                    </button>
+                    <button onclick="reloadUserDetails()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded transition-colors">
+                        🔃 Reload Details
+                    </button>
                 </div>
             </div>
 
@@ -105,6 +113,40 @@
                         </button>
                         <button onclick="cancelFlow()" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded transition-colors">
                             Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Token Comparison Modal -->
+            <div id="tokenComparisonModal" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50">
+                <div class="bg-gray-900 border border-gray-700 rounded-lg p-8 max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+                    <h2 class="text-2xl font-bold text-white mb-4">🔄 Token Refreshed</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <span class="text-gray-400 text-sm font-bold">📌 Session Token (Previous):</span>
+                            <div id="previousTokenDisplay" class="bg-red-900/20 border border-red-600 rounded px-3 py-2 text-red-400 font-mono text-xs break-all mt-2"></div>
+                        </div>
+                        <div>
+                            <span class="text-gray-400 text-sm font-bold">✅ Session Token (New):</span>
+                            <div id="currentTokenDisplay" class="bg-green-900/20 border border-green-600 rounded px-3 py-2 text-green-400 font-mono text-xs break-all mt-2"></div>
+                        </div>
+                        <div class="border-t border-gray-700 pt-4 mt-4">
+                            <span class="text-gray-400 text-sm font-bold">🔑 Refresh Token (Previous):</span>
+                            <div id="previousRefreshTokenDisplay" class="bg-yellow-900/20 border border-yellow-600 rounded px-3 py-2 text-yellow-400 font-mono text-xs break-all mt-2"></div>
+                        </div>
+                        <div>
+                            <span class="text-gray-400 text-sm font-bold">🔑 Refresh Token (New):</span>
+                            <div id="currentRefreshTokenDisplay" class="bg-blue-900/20 border border-blue-600 rounded px-3 py-2 text-blue-400 font-mono text-xs break-all mt-2"></div>
+                        </div>
+                        <div>
+                            <span class="text-gray-400 text-sm font-bold">Updated Status:</span>
+                            <div id="refreshTokenUpdatedDisplay" class="bg-gray-800 border border-gray-700 rounded px-3 py-2 font-mono text-sm mt-2"></div>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 mt-6">
+                        <button onclick="closeTokenComparison()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded transition-colors">
+                            ✓ Got it
                         </button>
                     </div>
                 </div>
@@ -545,6 +587,120 @@
             console.log('📊 Response Status:', statusCode);
             console.log('📥 Response Data:', response);
             console.groupEnd();
+        }
+
+        async function refreshSessionToken() {
+            console.log('%c🔄 REFRESHING SESSION TOKEN', 'color: #f59e0b; font-size: 14px; font-weight: bold;');
+            
+            if (!flowState.refreshToken) {
+                alert('❌ No refresh token available');
+                return;
+            }
+
+            try {
+                const previousToken = flowState.sessionToken;
+                const previousRefreshToken = flowState.refreshToken;
+                
+                const response = await fetch(`${flowState.baseUrl}/api/auth/refresh-token`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        refresh_token: flowState.refreshToken,
+                        device_fingerprint: ''  // Empty - let server generate
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.status === 'success') {
+                    const newToken = data.data.session_token;
+                    const newRefreshToken = data.data.refresh_token;
+                    const refreshTokenUpdated = data.data.refresh_token_updated;
+                    
+                    flowState.sessionToken = newToken;
+                    flowState.refreshToken = newRefreshToken;
+                    
+                    console.log('%c✅ Token Refreshed Successfully', 'color: #34d399; font-weight: bold;');
+                    console.log('Previous Session Token:', previousToken.substring(0, 30) + '...');
+                    console.log('New Session Token:', newToken.substring(0, 30) + '...');
+                    console.log('Previous Refresh Token:', previousRefreshToken.substring(0, 20) + '...');
+                    console.log('New Refresh Token:', newRefreshToken.substring(0, 20) + '...');
+                    console.log('Refresh Token Updated:', refreshTokenUpdated);
+
+                    // Show token comparison modal
+                    document.getElementById('previousTokenDisplay').textContent = previousToken;
+                    document.getElementById('currentTokenDisplay').textContent = newToken;
+                    document.getElementById('previousRefreshTokenDisplay').textContent = previousRefreshToken;
+                    document.getElementById('currentRefreshTokenDisplay').textContent = newRefreshToken;
+                    document.getElementById('refreshTokenUpdatedDisplay').textContent = refreshTokenUpdated ? '✅ Updated' : '❌ Not Updated';
+                    document.getElementById('refreshTokenUpdatedDisplay').style.color = refreshTokenUpdated ? '#86efac' : '#f87171';
+                    document.getElementById('tokenComparisonModal').classList.remove('hidden');
+
+                    updateSessionInfo();
+                } else {
+                    const tokenStatus = data.error?.field?.token_status || 'unknown';
+                    const errorMsg = data.message || 'Token refresh failed';
+                    console.error('%c❌ Token Refresh Failed:', 'color: #f87171; font-weight: bold;', `Status: ${tokenStatus} - ${errorMsg}`);
+                    alert(`❌ ${errorMsg}\n\nToken Status: ${tokenStatus}`);
+                }
+            } catch (error) {
+                console.error('%c💥 Token Refresh Error:', 'color: #f87171; font-weight: bold;', error);
+                alert(`❌ ${error.message}`);
+            }
+        }
+
+        function closeTokenComparison() {
+            document.getElementById('tokenComparisonModal').classList.add('hidden');
+        }
+
+        async function reloadUserDetails() {
+            console.log('%c🔃 RELOADING USER DETAILS', 'color: #60a5fa; font-size: 14px; font-weight: bold;');
+            
+            if (!flowState.sessionToken) {
+                alert('❌ No session token available');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${flowState.baseUrl}/api/user/details`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${flowState.sessionToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.status === 'success') {
+                    console.log('%c✅ User Details Reloaded Successfully', 'color: #34d399; font-weight: bold;');
+                    console.log('User Data:', data.data);
+                    
+                    // Create and show response in a new container
+                    const detailsContainer = document.createElement('div');
+                    detailsContainer.className = 'bg-gray-900 border border-gray-800 rounded-lg p-6 mb-6 mt-6';
+                    detailsContainer.innerHTML = `
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-bold text-green-400">✓ User Details (Fresh)</h3>
+                            <button onclick="this.parentElement.parentElement.remove()" class="text-gray-400 hover:text-gray-200">✕</button>
+                        </div>
+                        <div class="response-box">${JSON.stringify(data.data, null, 2)}</div>
+                    `;
+                    document.getElementById('stepsContainer').insertAdjacentElement('afterend', detailsContainer);
+                    detailsContainer.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    const tokenStatus = data.error?.field?.token_status || 'unknown';
+                    const errorMsg = data.message || 'Failed to reload user details';
+                    const statusInfo = tokenStatus !== 'unknown' ? `\n\n⚠️ Token Status: ${tokenStatus}` : '';
+                    console.error('%c❌ User Details Reload Failed:', 'color: #f87171; font-weight: bold;', `${errorMsg} (Status: ${tokenStatus})`);
+                    alert(`❌ ${errorMsg}${statusInfo}`);
+                }
+            } catch (error) {
+                console.error('%c💥 User Details Error:', 'color: #f87171; font-weight: bold;', error);
+                alert(`❌ ${error.message}`);
+            }
         }
     </script>
 </body>
