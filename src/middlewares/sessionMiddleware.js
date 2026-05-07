@@ -4,6 +4,59 @@
  * Handles session creation, validation, and token verification
  */
 
+// Cache for user status checks (2 minute TTL)
+const statusCache = new Map();
+const STATUS_CACHE_TTL = 2 * 60 * 1000; // 2 minutes in milliseconds
+
+/**
+ * Check user status with 2-minute caching
+ * @param {object} client - Database client
+ * @param {string} userId - User ID to check
+ * @returns {Promise<{status: string, cached: boolean}>} - User status and cache flag
+ */
+const checkUserStatus = async (client, userId) => {
+  try {
+    // Check if status is cached and not expired
+    if (statusCache.has(userId)) {
+      const cached = statusCache.get(userId);
+      if (Date.now() - cached.timestamp < STATUS_CACHE_TTL) {
+        return { status: cached.status, cached: true };
+      } else {
+        // Cache expired, remove it
+        statusCache.delete(userId);
+      }
+    }
+
+    // Fetch fresh status from database
+    const result = await client.query(
+      'SELECT status FROM users WHERE uid = $1',
+      [userId]
+    );
+
+    if (result.rows.length === 0) {
+      return { status: null, cached: false };
+    }
+
+    const status = result.rows[0].status;
+
+    // Cache the status for 2 minutes
+    statusCache.set(userId, {
+      status: status,
+      timestamp: Date.now()
+    });
+
+    return { status: status, cached: false };
+  } catch (error) {
+    console.error('[USER_STATUS_CHECK_ERROR]', {
+      timestamp: new Date().toISOString(),
+      userId: userId,
+      errorMessage: error.message,
+      errorCode: error.code
+    });
+    return { status: null, cached: false };
+  }
+};
+
 /**
  * Validate session token - returns user ID or null silently (for internal checks)
  * @param {object} client - Database client
@@ -34,9 +87,10 @@ const validateSessionToken = async (client, token) => {
 /**
  * Verify session token and immediately stop request if invalid
  * Dies right here if auth fails, otherwise continues
+ * Also checks if user status is active
  * @param {object} req - Express request
  * @param {object} res - Express response
- * @returns {Promise<string|null>} - User ID if valid, null if already sent error response
+ * @returns {Promise<string|null>} - User ID if valid and active, null if already sent error response
  */
 const verifySessionOrDie = async (req, res) => {
   try {
@@ -80,7 +134,32 @@ const verifySessionOrDie = async (req, res) => {
       return null;
     }
 
-    // Authorization successful - return userId to continue route
+    // Check user status (with 2-minute caching)
+    const { status, cached } = await checkUserStatus(req.db, userId);
+
+    if (!status) {
+      res.error(
+        { field: 'user_status' },
+        'User not found',
+        404
+      );
+      return null;
+    }
+
+    if (status !== 'active') {
+      res.error(
+        { 
+          field: 'user_status',
+          current_status: status,
+          cache_hit: cached
+        },
+        `User account is ${status}. Please contact support.`,
+        403
+      );
+      return null;
+    }
+
+    // Authorization and status check successful - return userId to continue route
     return userId;
 
   } catch (error) {
@@ -171,7 +250,9 @@ const sessionMiddleware = (req, res, next) => {
     verifySessionOrDie,
     generateSessionToken,
     generateRefreshToken,
-    createUserSession
+    createUserSession,
+    checkUserStatus,
+    clearStatusCache: (userId) => statusCache.delete(userId)
   };
   
   next();
@@ -184,3 +265,5 @@ module.exports.verifySessionOrDie = verifySessionOrDie;
 module.exports.generateSessionToken = generateSessionToken;
 module.exports.generateRefreshToken = generateRefreshToken;
 module.exports.createUserSession = createUserSession;
+module.exports.checkUserStatus = checkUserStatus;
+module.exports.clearStatusCache = (userId) => statusCache.delete(userId);
