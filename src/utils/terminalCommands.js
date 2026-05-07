@@ -97,51 +97,6 @@ module.exports = function startTerminalCommands(app, databaseConfig) {
       }
     },
 
-    routes: {
-      description: 'List all registered Express routes',
-      fn: () => {
-        console.log(`\n${divider}`);
-        console.log('[ROUTES] REGISTERED ROUTES');
-        console.log(`${divider}`);
-
-        const routes = [];
-        app._router.stack.forEach((middleware) => {
-          if (middleware.route) {
-            // Direct route
-            const methods = Object.keys(middleware.route.methods).map(m => m.toUpperCase());
-            routes.push({
-              method: methods.join(','),
-              path: middleware.route.path
-            });
-          } else if (middleware.name === 'router' && middleware.handle._routes) {
-            // Router middleware
-            middleware.handle.stack.forEach((handler) => {
-              if (handler.route) {
-                const methods = Object.keys(handler.route.methods).map(m => m.toUpperCase());
-                routes.push({
-                  method: methods.join(','),
-                  path: (middleware.regexp.source.match(/\/[^\/]*/)?.[0] || '') + handler.route.path
-                });
-              }
-            });
-          }
-        });
-
-        if (routes.length === 0) {
-          console.log('  (No routes registered)');
-        } else {
-          routes.forEach(route => {
-            const method = route.method.padEnd(8);
-            const path = route.path;
-            console.log(`  ${method} ${path}`);
-          });
-        }
-
-        console.log(`\n[STATS] Total: ${routes.length} route(s)`);
-        console.log(`${divider}\n`);
-      }
-    },
-
     mem: {
       description: 'Detailed memory usage breakdown',
       fn: () => {
@@ -173,36 +128,6 @@ module.exports = function startTerminalCommands(app, databaseConfig) {
         const sysStatus = sysPercent > 80 ? '[ERROR]' : sysPercent > 50 ? '[WARN]' : '[OK]';
         console.log(`  ${sysStatus} System Usage: ${sysPercent}%`);
 
-        console.log(`${divider}\n`);
-      }
-    },
-
-    env: {
-      description: 'Print environment variables (secrets masked)',
-      fn: () => {
-        const env = process.env;
-        const secretKeys = ['password', 'token', 'secret', 'key', 'api_key', 'auth', 'pwd', 'credential'];
-
-        console.log(`\n${divider}`);
-        console.log('[SECURE] ENVIRONMENT VARIABLES');
-        console.log(`${divider}`);
-
-        const entries = Object.entries(env)
-          .sort(([a], [b]) => a.localeCompare(b))
-          .slice(0, 50); // Limit to first 50 for readability
-
-        entries.forEach(([key, value]) => {
-          const isSecret = secretKeys.some(secret => key.toLowerCase().includes(secret));
-          const displayValue = isSecret ? '***MASKED***' : value;
-          console.log(`  ${key.padEnd(30)} = ${displayValue}`);
-        });
-
-        const totalCount = Object.keys(env).length;
-        if (totalCount > 50) {
-          console.log(`\n  ... and ${totalCount - 50} more variables`);
-        }
-
-        console.log(`\n[STATS] Total: ${totalCount} environment variable(s)`);
         console.log(`${divider}\n`);
       }
     },

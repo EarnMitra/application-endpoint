@@ -6,7 +6,7 @@
 Manual endpoint testing interface with:
 - **New User Endpoints**:
   - `GET /api/user/details` - Fetch all user details
-  - `GET /api/user/registration-status` - Check registration status
+  - `GET /api/user/registrationStatus` - Check registration status
 
 - **Features**:
   - Quick endpoint selector
@@ -40,10 +40,10 @@ Comprehensive automated testing that goes through the entire user lifecycle with
 |------|----------|--------|-------------|--------------|
 | 1 | `/api/auth/phone/initiate` | POST | Initiate phone verification | No |
 | 2 | `/api/auth/phone/verify` | POST | Verify phone with OTP | **YES** |
-| 3 | `/api/auth/register/add-email` | POST | Add email to account | No |
-| 4 | `/api/auth/register/verify-email` | POST | Verify email with OTP | **YES** |
-| 5 | `/api/auth/register/complete-profile` | POST | Complete user profile | No |
-| 6 | `/api/user/registration-status` | GET | Check registration status | No |
+| 3 | `/api/auth/register/addEmail` | POST | Add email to account | No |
+| 4 | `/api/auth/register/verifyEmail` | POST | Verify email with OTP | **YES** |
+| 5 | `/api/auth/register/completeProfile` | POST | Complete user profile | No |
+| 6 | `/api/user/registrationStatus` | GET | Check registration status | No |
 | 7 | `/api/user/details` | GET | Fetch all user details | No |
 
 ### How to Use

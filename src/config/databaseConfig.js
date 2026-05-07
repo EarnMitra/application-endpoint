@@ -66,14 +66,8 @@ class DatabaseConfig {
         // Connection will be automatically recreated on next query
       });
 
-      // Handle pool connect
-      this.pool.on('connect', () => {
-        console.log('✓ New database connection established');
-      });
-
-      // Log successful pool creation
-      console.log(`✓ Database connection pool initialized (${min}-${max} connections)`);
-      console.log(`✓ Keep-alive enabled: TCP keep-alive every ${keepalivesIdleSeconds}s`);
+      // Log successful pool creation (only once during initialization)
+      console.log(`Database connection pool initialized (${min}-${max} connections)`);
       this.initialized = true;
       
       // Start health check interval
@@ -224,8 +218,8 @@ class DatabaseConfig {
    */
   async testConnection() {
     try {
-      const result = await this.query('SELECT NOW()');
-      console.log('✓ Database connection test successful');
+      // Use pool.query directly to avoid logging
+      await this.pool.query('SELECT NOW()');
       return true;
     } catch (error) {
       console.error('✗ Database connection test failed:', error.message);
@@ -243,7 +237,7 @@ class DatabaseConfig {
       await this.pool.end();
       this.pool = null;
       this.initialized = false;
-      console.log('✓ Database connection pool closed');
+      console.log('Database connection pool closed');
     }
   }
 
@@ -268,19 +262,12 @@ class DatabaseConfig {
     // Run health check every 5 minutes
     this.healthCheckInterval = setInterval(async () => {
       try {
-        const result = await this.query('SELECT NOW() as time');
-        const stats = this.getPoolStats();
-        console.log('✓ Health check passed', {
-          time: new Date().toISOString(),
-          activeConnections: stats.activeCount,
-          idleConnections: stats.idleCount
-        });
+        await this.query('SELECT NOW() as time');
+        // Health check passed silently - only log errors
       } catch (error) {
         console.error('✗ Health check failed:', error.message);
       }
     }, 300000); // 5 minutes
-
-    console.log('✓ Database health check started (every 5 minutes)');
   }
 
   /**
@@ -290,7 +277,7 @@ class DatabaseConfig {
     if (this.healthCheckInterval) {
       clearInterval(this.healthCheckInterval);
       this.healthCheckInterval = null;
-      console.log('✓ Database health check stopped');
+      console.log('Database health check stopped');
     }
   }
 

@@ -232,7 +232,7 @@
                 id: 'add-email',
                 name: '📧 Step 3: Add Email',
                 method: 'POST',
-                endpoint: '/api/auth/register/add-email',
+                endpoint: '/api/auth/register/addEmail',
                 getData: () => ({ email: flowState.email }),
                 onSuccess: (data) => {
                     flowState.emailOtpToken = data.token;
@@ -245,7 +245,7 @@
                 id: 'verify-email',
                 name: '✓ Step 4: Verify Email OTP',
                 method: 'POST',
-                endpoint: '/api/auth/register/verify-email',
+                endpoint: '/api/auth/register/verifyEmail',
                 getData: () => ({ token: flowState.emailOtpToken, otp: flowState.otpValue, email: flowState.email }),
                 onSuccess: (data) => {
                     flowState.registrationStep = data.step;
@@ -258,7 +258,7 @@
                 id: 'complete-profile',
                 name: '👤 Step 5: Complete Profile',
                 method: 'POST',
-                endpoint: '/api/auth/register/complete-profile',
+                endpoint: '/api/auth/register/completeProfile',
                 getData: () => ({
                     first_name: flowState.firstName,
                     last_name: 'Tester',
@@ -276,7 +276,7 @@
                 id: 'registration-status',
                 name: '📊 Step 6: Check Registration Status',
                 method: 'GET',
-                endpoint: '/api/user/registration-status',
+                endpoint: '/api/user/registrationStatus',
                 getData: () => ({}),
                 onSuccess: (data) => true,
                 requiresOTP: null,

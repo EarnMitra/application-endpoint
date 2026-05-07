@@ -27,15 +27,15 @@ const refreshRoutes = require('./refresh');
  *   Auto-detects: If phone exists → Login with history, If not → Create account
  * 
  * Registration Flow (after phone verification):
- * - POST /api/auth/register/add-email - Add email
- * - POST /api/auth/register/verify-email - Verify email OTP
- * - POST /api/auth/register/complete-profile - Complete profile info
+ * - POST /api/auth/register/addEmail - Add email
+ * - POST /api/auth/register/verifyEmail - Verify email OTP
+ * - POST /api/auth/register/completeProfile - Complete profile info
  * 
  * Status Check:
  * - GET /api/auth/status?phone=9876543210 - Check registration progress
  * 
  * Token Refresh:
- * - POST /api/auth/refresh-token - Refresh session token using refresh token
+ * - POST /api/auth/refreshToken - Refresh session token using refresh token
  */
 
 // Phone OTP routes - handles both registration and login

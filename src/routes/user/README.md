@@ -169,7 +169,7 @@ User profile and account management endpoints.
 ---
 
 ### 2. Get Registration Status
-- **Route**: `GET /api/user/registration-status`
+- **Route**: `GET /api/user/registrationStatus`
 - **Authentication**: Required (Bearer Token)
 - **Headers**: 
   ```

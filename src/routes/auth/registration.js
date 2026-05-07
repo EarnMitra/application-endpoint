@@ -14,12 +14,12 @@ const rateLimiter = require('./rateLimiter');
 
 /**
  * STEP 1: Add Email and Send OTP
- * POST /api/auth/register/add-email
+ * POST /api/auth/register/addEmail
  * Headers: { Authorization: "Bearer <session_token>" }
  * Body: { email: "user@example.com" }
  * Prerequisites: Must have valid session token from phone/verify
  */
-router.post('/add-email', async (req, res) => {
+router.post('/addEmail', async (req, res) => {
   // BUG FIX #6: Initialize variables outside try block to ensure they're available in error logs
   let normalizedEmail = null;
   try {
@@ -188,11 +188,11 @@ router.post('/add-email', async (req, res) => {
 
 /**
  * STEP 2: Verify Email OTP
- * POST /api/auth/register/verify-email
+ * POST /api/auth/register/verifyEmail
  * Headers: { Authorization: "Bearer <session_token>" }
  * Body: { token: "...", otp: "123456", email: "user@example.com" }
  */
-router.post('/verify-email', async (req, res) => {
+router.post('/verifyEmail', async (req, res) => {
   // BUG FIX #6: Initialize variables outside try block for error logs
   let normalizedEmail = null;
   
@@ -338,11 +338,11 @@ router.post('/verify-email', async (req, res) => {
 
 /**
  * STEP 3: Complete Profile
- * POST /api/auth/register/complete-profile
+ * POST /api/auth/register/completeProfile
  * Headers: { Authorization: "Bearer <session_token>" }
  * Body: { first_name: "John", last_name: "Doe", middle_name: "Michael", gender: "male", date_of_birth: "1990-01-15" }
  */
-router.post('/complete-profile', async (req, res) => {
+router.post('/completeProfile', async (req, res) => {
   // BUG FIX #6: Initialize variables outside try block for error logs
   let first_name = null;
   let userId = null;

@@ -176,7 +176,7 @@ This directory contains all authentication-related endpoints for the EarnMitra a
     "referralCode": "12345678",
     "step": 1,
     "message": "User created, phone verified",
-    "nextStep": "add-email"
+    "nextStep": "addEmail"
   },
   "message": "Phone verified successfully"
 }
@@ -309,7 +309,7 @@ This directory contains all authentication-related endpoints for the EarnMitra a
 
 ### 3. Registration - Add Email
 
-**Endpoint:** `POST /api/auth/register/add-email`
+**Endpoint:** `POST /api/auth/register/addEmail`
 
 **Description:** Add email to user account and send verification OTP (Step 1 of registration)
 
@@ -351,7 +351,7 @@ Authorization: Bearer session_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6
 
 **Field Descriptions:**
 - `email` (string): Normalized email (lowercase, trimmed)
-- `token` (string): Token to be used in `/verify-email` endpoint
+- `token` (string): Token to be used in `/verifyEmail` endpoint
 - `step` (number): Registration step number (1)
 - `expiresIn` (number): OTP validity period in seconds
 
@@ -452,7 +452,7 @@ Authorization: Bearer session_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6
   "errors": {
     "field": "email"
   },
-  "message": "Too many add-email attempts. Try again in 1234 seconds."
+  "message": "Too many addEmail attempts. Try again in 1234 seconds."
 }
 ```
 
@@ -476,7 +476,7 @@ Authorization: Bearer session_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6
 
 ### 4. Registration - Verify Email
 
-**Endpoint:** `POST /api/auth/register/verify-email`
+**Endpoint:** `POST /api/auth/register/verifyEmail`
 
 **Description:** Verify email OTP and mark email as verified (Step 2 of registration)
 
@@ -484,7 +484,7 @@ Authorization: Bearer session_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6
 
 | Parameter | Type | Location | Required | Description |
 |-----------|------|----------|----------|-------------|
-| `token` | string | body | Yes | Email OTP token from `/add-email` |
+| `token` | string | body | Yes | Email OTP token from `/addEmail` |
 | `otp` | string | body | Yes | 6-digit OTP sent to email |
 | `email` | string | body | Yes | Email address being verified |
 | `Authorization` | string | header | Yes | Bearer session token |
@@ -514,7 +514,7 @@ Authorization: Bearer session_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6
     "verified": true,
     "step": 2,
     "message": "Email verified",
-    "nextStep": "complete-profile"
+    "nextStep": "completeProfile"
   },
   "message": "Email verified successfully"
 }
@@ -622,7 +622,7 @@ Authorization: Bearer session_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6
   "errors": {
     "field": "email"
   },
-  "message": "Too many verify-email attempts. Try again in 1234 seconds."
+  "message": "Too many verifyEmail attempts. Try again in 1234 seconds."
 }
 ```
 
@@ -646,7 +646,7 @@ Authorization: Bearer session_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6
 
 ### 5. Registration - Complete Profile
 
-**Endpoint:** `POST /api/auth/register/complete-profile`
+**Endpoint:** `POST /api/auth/register/completeProfile`
 
 **Description:** Complete user profile information (Step 3 of registration, final step)
 
@@ -905,11 +905,11 @@ GET /api/auth/status?phone=9876543210
    ↓ (Returns token + purpose: "registration")
 2. POST /api/auth/phone/verify
    ↓ (Returns sessionToken + uid)
-3. POST /api/auth/register/add-email
+3. POST /api/auth/register/addEmail
    ↓ (Returns email OTP token)
-4. POST /api/auth/register/verify-email
+4. POST /api/auth/register/verifyEmail
    ↓ (Confirms email verification)
-5. POST /api/auth/register/complete-profile
+5. POST /api/auth/register/completeProfile
    ↓ (Completes registration)
 6. Registration Complete ✓
 ```
@@ -949,8 +949,8 @@ Returns current registration step
 |----------|-------|--------|-------------|
 | `/phone/initiate` | 5/hour | 1 hour | 429 |
 | `/phone/verify` | 10/hour | 1 hour | 429 |
-| `/register/add-email` | 5/hour | 1 hour | 429 |
-| `/register/verify-email` | 10/hour | 1 hour | 429 |
+| `/register/addEmail` | 5/hour | 1 hour | 429 |
+| `/register/verifyEmail` | 10/hour | 1 hour | 429 |
 
 **Rate Limit Response Headers:**
 - `Retry-After`: Seconds until retry is allowed
@@ -1028,7 +1028,7 @@ curl -X POST http://localhost:3000/api/auth/phone/verify \
 
 ### 3. Add Email
 ```bash
-curl -X POST http://localhost:3000/api/auth/register/add-email \
+curl -X POST http://localhost:3000/api/auth/register/addEmail \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer sessionToken" \
   -d '{"email": "user@example.com"}'
@@ -1036,7 +1036,7 @@ curl -X POST http://localhost:3000/api/auth/register/add-email \
 
 ### 4. Verify Email OTP
 ```bash
-curl -X POST http://localhost:3000/api/auth/register/verify-email \
+curl -X POST http://localhost:3000/api/auth/register/verifyEmail \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer sessionToken" \
   -d '{
@@ -1048,7 +1048,7 @@ curl -X POST http://localhost:3000/api/auth/register/verify-email \
 
 ### 5. Complete Profile
 ```bash
-curl -X POST http://localhost:3000/api/auth/register/complete-profile \
+curl -X POST http://localhost:3000/api/auth/register/completeProfile \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer sessionToken" \
   -d '{

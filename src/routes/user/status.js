@@ -9,12 +9,12 @@ const helpers = require('./helpers');
 
 /**
  * Get Registration Status
- * GET /api/user/registration-status
+ * GET /api/user/registrationStatus
  * Headers: { Authorization: "Bearer <session_token>" }
  * 
  * Returns current registration step and whether user is stuck
  */
-router.get('/registration-status', async (req, res) => {
+router.get('/registrationStatus', async (req, res) => {
   try {
     const authHeader = req.get('Authorization');
 

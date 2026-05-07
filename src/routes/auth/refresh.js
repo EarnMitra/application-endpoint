@@ -17,11 +17,11 @@ const router = express.Router();
 
 /**
  * Refresh Session Token
- * POST /api/auth/refresh-token
+ * POST /api/auth/refreshToken
  * Body: { refresh_token: "...", device_fingerprint: "..." (optional) }
  * Returns: { session_token, refresh_token, refresh_token_updated, expires_at, expires_in }
  */
-router.post('/refresh-token', async (req, res) => {
+router.post('/refreshToken', async (req, res) => {
   try {
     const { refresh_token, device_fingerprint } = req.body;
 

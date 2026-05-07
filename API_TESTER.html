@@ -184,16 +184,16 @@
                             <option value="phone-verify">✓ Phone OTP Verify · POST /api/auth/phone/verify</option>
                         </optgroup>
                         <optgroup label="Authentication · Registration">
-                            <option value="register-add-email">📧 Add Email · POST /api/auth/register/add-email</option>
-                            <option value="register-verify-email">✓ Verify Email · POST /api/auth/register/verify-email</option>
-                            <option value="register-complete">👤 Complete Profile · POST /api/auth/register/complete-profile</option>
+                            <option value="register-add-email">📧 Add Email · POST /api/auth/register/addEmail</option>
+                            <option value="register-verify-email">✓ Verify Email · POST /api/auth/register/verifyEmail</option>
+                            <option value="register-complete">👤 Complete Profile · POST /api/auth/register/completeProfile</option>
                         </optgroup>
                         <optgroup label="Authentication · Status">
                             <option value="auth-status">📊 Status Check · GET /api/auth/status</option>
                         </optgroup>
                         <optgroup label="User · Profile">
                             <option value="user-details">👥 User Details · GET /api/user/details</option>
-                            <option value="registration-status">📊 Registration Status · GET /api/user/registration-status</option>
+                            <option value="registration-status">📊 Registration Status · GET /api/user/registrationStatus</option>
                         </optgroup>
                         </optgroup>
                     </select>
@@ -426,17 +426,17 @@
                 body: '{\n  "token": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6",\n  "otp": "123456",\n  "phone": "9876543210",\n  "deviceInfo": {\n    "deviceName": "Samsung Galaxy A12",\n    "osType": "Android",\n    "browserType": "Chrome",\n    "screenResolution": "1080x2400",\n    "timezone": "Asia/Kolkata"\n  }\n}'
             },
             'add-email': {
-                path: '/api/auth/register/add-email', method: 'POST',
+                path: '/api/auth/register/addEmail', method: 'POST',
                 headers: '{"Content-Type": "application/json"}',
                 body: '{\n  "email": "user@example.com"\n}'
             },
             'verify-email': {
-                path: '/api/auth/register/verify-email', method: 'POST',
+                path: '/api/auth/register/verifyEmail', method: 'POST',
                 headers: '{"Content-Type": "application/json"}',
                 body: '{\n  "token": "email_token_a1b2c3d4e5f6",\n  "otp": "123456",\n  "email": "user@example.com"\n}'
             },
             'complete-profile': {
-                path: '/api/auth/register/complete-profile', method: 'POST',
+                path: '/api/auth/register/completeProfile', method: 'POST',
                 headers: '{"Content-Type": "application/json"}',
                 body: '{\n  "firstName": "John",\n  "lastName": "Doe",\n  "dob": "1990-01-15",\n  "address": "123 Main Street",\n  "city": "Delhi",\n  "state": "DL",\n  "pincode": "110001"\n}'
             },
@@ -451,7 +451,7 @@
                 body: ''
             },
             'registration-status-sample': {
-                path: '/api/user/registration-status', method: 'GET',
+                path: '/api/user/registrationStatus', method: 'GET',
                 headers: '{"Content-Type": "application/json", "Authorization": "Bearer <session_token>"}',
                 body: ''
             }
@@ -460,12 +460,12 @@
         const endpointPresets = {
             'phone-initiate':        { path: '/api/auth/phone/initiate',             method: 'POST', template: 'phone-otp-initiate' },
             'phone-verify':          { path: '/api/auth/phone/verify',               method: 'POST', template: 'phone-otp-verify' },
-            'register-add-email':    { path: '/api/auth/register/add-email',         method: 'POST', template: 'add-email' },
-            'register-verify-email': { path: '/api/auth/register/verify-email',      method: 'POST', template: 'verify-email' },
-            'register-complete':     { path: '/api/auth/register/complete-profile',  method: 'POST', template: 'complete-profile' },
+            'register-add-email':    { path: '/api/auth/register/addEmail',         method: 'POST', template: 'add-email' },
+            'register-verify-email': { path: '/api/auth/register/verifyEmail',      method: 'POST', template: 'verify-email' },
+            'register-complete':     { path: '/api/auth/register/completeProfile',  method: 'POST', template: 'complete-profile' },
             'auth-status':           { path: '/api/auth/status?phone=9876543210',    method: 'GET',  template: 'status-check' },
             'user-details':          { path: '/api/user/details',                    method: 'GET',  template: null },
-            'registration-status':   { path: '/api/user/registration-status',        method: 'GET',  template: null },
+            'registration-status':   { path: '/api/user/registrationStatus',        method: 'GET',  template: null },
         };
 
         // ─────────────────────────────────────────
