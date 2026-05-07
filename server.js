@@ -1,6 +1,9 @@
 require('dotenv').config();
+const cluster = require('cluster');
+const os = require('os');
 const express = require('express');
 const cors = require('cors');
+const compression = require('compression'); // OPTIMIZATION #3: Response compression
 
 const appConfig = require('./src/config/appConfig');
 const databaseConfig = require('./src/config/databaseConfig');
@@ -8,6 +11,9 @@ const middlewares = require('./src/middlewares');
 const authRoutes = require('./src/routes/auth');
 const userRoutes = require('./src/routes/user');
 const rateLimiter = require('./src/routes/auth/rateLimiter'); // BUG FIX #4: Import for shutdown
+
+// OPTIMIZATION #1: Enable clustering for multi-core utilization
+const NUM_WORKERS = process.env.NODE_CLUSTER_WORKERS || os.cpus().length;
 
 // Auto-discover middleware conditions based on naming conventions
 const getMiddlewareCondition = (middlewareName) => {
@@ -83,7 +89,20 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.json());
+app.use(express.json({ limit: '50mb' })); // OPTIMIZATION #4: Increased JSON payload limit
+
+// OPTIMIZATION #3: Enable response compression for bandwidth optimization
+app.use(compression({
+  filter: (req, res) => {
+    // Don't compress responses with this request header
+    if (req.headers['x-no-compression']) {
+      return false;
+    }
+    // Use compression filter function
+    return compression.filter(req, res);
+  },
+  level: 6 // Balance between speed and compression ratio
+}));
 
 // Dynamically apply all registered middlewares
 middlewareConfig.forEach(({ name, condition }) => {
@@ -215,13 +234,38 @@ app.use((err, req, res, next) => {
   }
 });
 
-// Start server
-app.listen(PORT, () => {
+// OPTIMIZATION #1: Cluster setup for multi-core processing
+if (cluster.isMaster) {
   console.log(`
   ╔════════════════════════════════════════╗
-  ║   EarnMitra Server Started Successfully ║
+  ║   EarnMitra Server - MASTER PROCESS    ║
   ╠════════════════════════════════════════╣
-  ║ URL:  http://localhost:${PORT}
+  ║ Spawning ${NUM_WORKERS} worker processes
+  ║ Port: ${PORT}
+  ║ Environment: ${config.nodeEnv}
+  ╚════════════════════════════════════════╝
+  `);
+
+  // Fork workers
+  for (let i = 0; i < NUM_WORKERS; i++) {
+    cluster.fork();
+  }
+
+  // Handle worker crashes - auto restart
+  cluster.on('exit', (worker, code, signal) => {
+    console.log(`[CLUSTER] Worker ${worker.process.pid} died (${signal || code}). Restarting...`);
+    cluster.fork();
+  });
+
+} else {
+  // Worker process
+  app.listen(PORT, () => {
+    console.log(`
+  ╔════════════════════════════════════════╗
+  ║   EarnMitra Server Worker Started      ║
+  ╠════════════════════════════════════════╣
+  ║ Worker PID: ${process.pid}
+  ║ URL: http://localhost:${PORT}
   ║ Mode: ${config.mode.toUpperCase()}
   ║ Environment: ${config.nodeEnv}
   ║ Output Type: ${config.outputType.toUpperCase()}
@@ -229,36 +273,34 @@ app.listen(PORT, () => {
   ║ Database: ${databaseConfig.getConfig().user}@${databaseConfig.getConfig().host}:${databaseConfig.getConfig().port}/${databaseConfig.getConfig().database}
   ║ Timestamp: ${config.timestamp}
   ╚════════════════════════════════════════╝
-  `);
+    `);
 
-  // BUG FIX #4: Rate limiter cleanup is now initialized with interval management
-  // No need to initialize here as rateLimiter singleton already schedules cleanup
+    // BUG FIX #4: Rate limiter cleanup is now initialized with interval management
+    // No need to initialize here as rateLimiter singleton already schedules cleanup
 
+    // Log CORS Configuration
+    console.log('\n[CORS] Configuration enabled:');
+    console.log('[CORS] Allow Origins: * (All origins)');
+    console.log('[CORS] Methods: GET, POST, PUT, DELETE, PATCH, OPTIONS');
+    console.log('[CORS] Headers: Content-Type, Authorization, X-Requested-With, X-App-Mode, X-Output-Type');
+    console.log('[CORS] Referrer Policy: no-referrer');
+    console.log('[CORS] Credentials: false');
+    console.log('[CORS] Diagnostic: GET http://localhost:' + PORT + '/api/cors-check');
 
+    // Log database connection status
+    console.log('\n[DATABASE] Connection pool status:');
+    console.log('[DATABASE] Keep-Alive: ENABLED (10 second interval)');
+    console.log('[DATABASE] Health Check: ENABLED (5 minute interval)');
+    console.log('[DATABASE] Idle Timeout: 10 minutes');
+    console.log('[DATABASE] Auto-Recovery: ENABLED');
+    console.log('[CLUSTERING] Worker PID: ' + process.pid);
+    console.log('[SERVER] Ready to accept requests\n');
 
-  // Log CORS Configuration
-  console.log('\n[CORS] Configuration enabled:');
-  console.log('[CORS] Allow Origins: * (All origins)');
-  console.log('[CORS] Methods: GET, POST, PUT, DELETE, PATCH, OPTIONS');
-  console.log('[CORS] Headers: Content-Type, Authorization, X-Requested-With, X-App-Mode, X-Output-Type');
-  console.log('[CORS] Referrer Policy: no-referrer');
-  console.log('[CORS] Credentials: false');
-  console.log('[CORS] Diagnostic: GET http://localhost:' + PORT + '/api/cors-check');
-
-  // Log database connection status
-  console.log('\n[DATABASE] Connection pool status:');
-  console.log('[DATABASE] Keep-Alive: ENABLED (30 second interval)');
-  console.log('[DATABASE] Health Check: ENABLED (5 minute interval)');
-  console.log('[DATABASE] Idle Timeout: 15 minutes');
-  console.log('[DATABASE] Auto-Recovery: ENABLED');
-  console.log('[SERVER] Ready to accept requests\n');
-});
-
-// Terminal Commands Listener (interactive CLI)
-const startTerminalCommands = require('./src/utils/terminalCommands');
-startTerminalCommands(app, databaseConfig);
-
-// Graceful Shutdown Handler
+    // Terminal Commands Listener (interactive CLI)
+    const startTerminalCommands = require('./src/utils/terminalCommands');
+    startTerminalCommands(app, databaseConfig);
+  });
+}
 process.on('SIGTERM', async () => {
   console.log('\n[SHUTDOWN] SIGTERM signal received - closing server');
   

@@ -93,11 +93,7 @@ router.get('/details', async (req, res) => {
         status: user.status
       },
       profile: userProfile,
-      wallet: wallet,
-      bankAccount: bankAccount,
-      kyc: kyc,
-      lastLogin: lastLogin,
-      verificationHistory: verificationHistory
+      wallet: wallet
     };
 
     res.success(

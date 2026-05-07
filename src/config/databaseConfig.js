@@ -11,6 +11,11 @@ class DatabaseConfig {
     this.pool = null;
     this.initialized = false;
     this.connectionConfig = {};
+    this.queryCache = new Map(); // OPTIMIZATION #2: Query result caching
+    this.cacheConfig = {
+      enabled: process.env.QUERY_CACHE_ENABLED !== 'false',
+      ttlMs: parseInt(process.env.QUERY_CACHE_TTL_MS, 10) || 5000 // 5 second cache
+    };
   }
 
   /**
@@ -104,20 +109,51 @@ class DatabaseConfig {
   }
 
   /**
+   * Generate cache key for query
+   * OPTIMIZATION #2: Enables query result caching
+   */
+  getCacheKey(query, params) {
+    return `${query}|${JSON.stringify(params)}`;
+  }
+
+  /**
    * Execute a query on the pool
    * @param {string} query - SQL query string
    * @param {Array} params - Query parameters
+   * @param {Object} options - Query options { cache: boolean, cacheTtl: number }
    * @returns {Promise<Result>} - Query result
    */
-  async query(query, params = []) {
+  async query(query, params = [], options = {}) {
     if (!this.pool) {
       throw new Error('Database pool not initialized. Call initialize() first.');
+    }
+    
+    // OPTIMIZATION #2: Check cache for SELECT queries
+    const isSelectQuery = query.trim().toUpperCase().startsWith('SELECT');
+    const shouldCache = this.cacheConfig.enabled && isSelectQuery && options.cache !== false;
+    
+    if (shouldCache) {
+      const cacheKey = this.getCacheKey(query, params);
+      const cached = this.queryCache.get(cacheKey);
+      
+      if (cached && Date.now() - cached.timestamp < this.cacheConfig.ttlMs) {
+        return cached.result;
+      }
     }
     
     try {
       const startTime = Date.now();
       const result = await this.pool.query(query, params);
       const duration = Date.now() - startTime;
+      
+      // OPTIMIZATION #2: Cache SELECT results
+      if (shouldCache) {
+        const cacheKey = this.getCacheKey(query, params);
+        this.queryCache.set(cacheKey, {
+          result,
+          timestamp: Date.now()
+        });
+      }
       
       // Only log queries in dev mode (not in production/live)
       if (process.env.NODE_ENV !== 'live' && process.env.NODE_ENV !== 'prod' && process.env.NODE_ENV !== 'production') {
@@ -129,6 +165,14 @@ class DatabaseConfig {
       console.error('Database query error:', error);
       throw error;
     }
+  }
+
+  /**
+   * OPTIMIZATION #2: Clear query cache
+   * Call this when data changes
+   */
+  clearCache() {
+    this.queryCache.clear();
   }
 
   /**
